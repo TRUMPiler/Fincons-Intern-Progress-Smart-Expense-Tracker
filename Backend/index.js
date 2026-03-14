@@ -10,6 +10,7 @@ import Error from "./middleware/ErrorHandling.js";
 import cors from "cors";
 import CategoryService from "./services/CategoryService.js";
 import ChartRoute from './Routes/ChartRoute.js';
+import CronJobRouter from './Routes/CronJobRoute.js'
 import AlertRoute from './Routes/AlertRoute.js';
 import { seedTransactions } from "./SeederJunction.js";
 
@@ -19,6 +20,7 @@ const db = new DBconfig();
 
 app.use(express.json());
 app.use(cors());
+app.use("/api/cronJob",CronJobRouter);
 app.use("/api/chats",chatsRoutes)
 app.use("/api/user", userRoutes);
 app.use("/api/alert",AlertRoute);

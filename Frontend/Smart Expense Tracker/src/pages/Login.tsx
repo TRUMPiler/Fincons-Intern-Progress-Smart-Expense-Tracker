@@ -141,7 +141,7 @@ export default function Login() {
 												const label =
 													strength === 0 ? 'Enter a password' : strength === 1 ? 'Weak' : strength === 2 ? 'Medium' : 'Strong';
 												return (
-													<div className="w-full text-gray-900 bg-gray-200 rounded-2xl  dark:text-white p-6 transition-all">
+													<div className="w-full text-gray-900 bg-gray-200 rounded-2xl dark:bg-indigo-900  dark:text-white p-6 transition-all">
 														<div className="text-sm font-medium mb-2">Password strength</div>
 														<div className="flex gap-2 mb-2">
 															<div className={`h-2 flex-1 rounded ${strength >= 1 ? 'bg-red-500' : 'bg-gray-200 dark:bg-gray-700'}`} />

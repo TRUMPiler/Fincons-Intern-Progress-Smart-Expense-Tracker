@@ -1,6 +1,6 @@
 import Transaction from "../models/Transaction.js";
 import Alert from "../models/Alert.js";
-import Category from "../models/category.js";
+import Category from "../models/Category.js";
 import User from "../models/user.js";
 import mailer from "../mailer/Transport.js";
 import mongoose from "mongoose";

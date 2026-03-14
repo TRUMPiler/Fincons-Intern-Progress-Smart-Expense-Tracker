@@ -34,7 +34,7 @@ const CategorySpending=({loading,chartBarData,chartBarOptions,chartMonthlyData,c
                         <Card className="p-2 shadow rounded-lg flex flex-col dark:border dark:border-white ">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-gray-700 dark:text-white">Monthly Spending Trend</h3>
-                                <p className="text-sm text-gray-500 dark:text-white">This month</p>
+                                {/* <p className="text-sm text-gray-500 dark:text-white">This month</p> */}
                             </div>
                             <div className="flex-1 flex items-center justify-center w-full">
                                 {loading ? (

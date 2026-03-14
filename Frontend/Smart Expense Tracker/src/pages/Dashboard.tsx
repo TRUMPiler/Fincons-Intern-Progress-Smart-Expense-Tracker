@@ -14,6 +14,7 @@ import SummaryCard from "../components/SummaryCard";
 import IncomeExpense from "../components/IncomeExpense";
 import CategorySpending from "../components/CategorySpending";
 import BudgetMeters from "../components/BudgetMeters";
+import { SelectButton } from "primereact/selectbutton";
 
 type CategoryProp = {
     name: string;
@@ -63,12 +64,15 @@ const DashboardL: FC = () => {
     const [chartBarOptions, setChartBarOptions] = useState({});
     const [chartMonthlyOptions, setChartMonthlyOptions] = useState({});
     const [alerts,setAlerts]=useState<Alert[]>([]);
+    const [dashboardView,setDashboardView]=useState<"Overview"|"Budget Meters">("Overview");
+    const options=["Overview","Budget Meters"];
     const [currentAlertIndex, setCurrentAlertIndex] = useState<number | null>(null);
     const dispatch = useAppDispatch();
     let acceptRef=useRef<string>('');
     const charts = useAppSelector((s) => s.charts);
     const currentMonth = new Date().toLocaleString(undefined, { month: "long", year: "numeric" });
     const toast=useRef<Toast|null>(null);
+    const recentTransactions = transcations.slice(-5).reverse();
     const accepted = async (alertid:string) => {
         try{
             const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/alert/`+alertid,{},{
@@ -176,6 +180,7 @@ const DashboardL: FC = () => {
         } else {
             setCurrentAlertIndex(null);
         }
+        
         const monthsData = charts.monthlyTrend ?? []
         const monthLabels = monthsData.map((e) => Months[e.month - 1])
         const monthTotals = monthsData.map((e) => e.totalSpent)
@@ -286,6 +291,7 @@ const DashboardL: FC = () => {
          <Toast ref={toast}/>
             <div className="w-full max-w-7xl  mt-3">
                 <div className="flex items-center justify-between mb-6">
+                <SelectButton options={options} value={dashboardView} onChange={(e:any)=>setDashboardView(e.value)} />
             <ConfirmDialog
                 group="headless"
                 content={({ headerRef, contentRef, footerRef, hide, message }) => (
@@ -343,17 +349,43 @@ const DashboardL: FC = () => {
                         <p className="text-sm text-gray-600 dark:text-gray-300">Overview · {currentMonth}</p>
                     </div>
                 </div>
-
+            {(dashboardView==="Overview"?(<>
                <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading}  predictExpense={predictExpense}/>
 
                 <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions}/>
                 
                <CategorySpending loading={loading} chartBarData={chartBarData} chartBarOptions={chartBarOptions} categoryOptions={categoryOptions} chartMonthlyData={chartMonthlyData} chartMonthlyOptions={chartMonthlyOptions} transcations={transcations} setTranscation={setTranscations} />
+
+               <Card className="p-4 shadow rounded-lg dark:border dark:border-white mt-4">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2 dark:text-white">Recent Transactions</h3>
+                    {recentTransactions.length === 0 ? (
+                        <p className="text-sm text-gray-500">No recent transactions</p>
+                    ) : (
+                        <div className="divide-y">
+                            {recentTransactions.map((t) => (
+                                <div key={t._id} className="flex items-center justify-between py-2">
+                                    <div>
+                                        <div className="text-sm font-medium">{t.description ?? t.category?.name ?? 'No description'}</div>
+                                        <div className="text-xs text-gray-500">{t.date ? new Date(t.date).toLocaleDateString() : ''}</div>
+                                    </div>
+                                    <div className={t.type === 'expense' ? 'text-red-500 font-semibold' : 'text-green-500 font-semibold'}>
+                                        {t.amount ? t.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : ''}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </Card>
+               </>
+               ):(
+                <>
                <BudgetMeters loading={loading} charts={charts} chartData={chartData}/>
                 <Card className="p-4 shadow rounded-lg dark:border dark:border-white">
                     <h3 className="text-lg font-semibold text-gray-700 mb-4 dark:text-white">Transactions</h3>
                     <Transcation transcations={transcations} setTranscations={setTranscations} />
                 </Card>
+                </>
+                ))}
             </div>
         </div>
     );

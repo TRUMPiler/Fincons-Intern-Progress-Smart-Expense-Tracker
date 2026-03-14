@@ -10,7 +10,7 @@ type IncomeExpenseProps={
     setTranscation:Dispatch<SetStateAction<TranscationType[]>>;
     categoryOptions:Array<{ label: string; value: string }>;
 }
-const IncomeExpense=({chartData,chartOptions,loading,transcations,setTranscation,categoryOptions}:IncomeExpenseProps)=>{
+const IncomeExpense=({chartData,chartOptions,loading,transcations,categoryOptions}:IncomeExpenseProps)=>{
     return(
         <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mb-4">
                             <Card className="p-2 shadow rounded-lg h-96 flex flex-col dark:border dark:border-white">

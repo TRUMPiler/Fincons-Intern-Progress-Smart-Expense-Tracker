@@ -1,4 +1,4 @@
-import { useEffect,  useRef, useState, type FC } from "react";
+import { useEffect,  useRef, useState, type FC, type Ref } from "react";
 import Transcation from "../components/Transactions";
 import { Card } from "primereact/card";
 
@@ -300,13 +300,13 @@ const DashboardL: FC = () => {
                         <div className="flex items-center justify-center h-24 w-24 rounded-full bg-linear-to-br from-indigo-500 to-purple-500 text-white -mt-12 shadow-xl">
                           <img src={AlertGif} />
                         </div>
-                        <span className="mt-4 text-2xl font-semibold text-gray-900 dark:text-white block" ref={headerRef}>
+                        <span className="mt-4 text-2xl font-semibold text-gray-900 dark:text-white block" ref={headerRef as unknown as Ref<HTMLSpanElement>}>
                             {message.header}
                         </span>
-                        <p className="mt-2 text-sm text-center text-gray-600 dark:text-white  px-4" ref={contentRef}>
+                        <p className="mt-2 text-sm text-center text-gray-600 dark:text-white  px-4" ref={contentRef as unknown as Ref<HTMLParagraphElement>}>
                             {message.message}
                         </p>
-                        <div className="flex items-center gap-3 mt-6" ref={footerRef}>
+                        <div className="flex items-center gap-3 mt-6" ref={footerRef as unknown as Ref<HTMLDivElement>}>
                             <button
                                 onClick={async (event) => {
                                     hide(event);

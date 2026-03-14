@@ -14,8 +14,8 @@ import {
 
   PanelLeftClose,
   FileText,
-  Users,
-  Settings,
+  // Users,
+  // Settings,
   HelpingHand,
 } from "lucide-react"
 

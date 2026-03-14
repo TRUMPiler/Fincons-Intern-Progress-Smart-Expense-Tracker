@@ -278,11 +278,10 @@ const chartsSlice = createSlice({
             .addCase(fetchBudgetWiseUsage.rejected, (state, action) => {
                 state.status = 'failed'
                 state.error = action.payload ?? 'Failed to fetch totals'
-            }).addCase(fetchAlerts.pending,(state,action)=>{
+            }).addCase(fetchAlerts.pending,(state)=>{
                 state.status='loading';
             }).addCase(fetchAlerts.fulfilled,(state,action)=>{
 
-                state.status="succeeded"
                 state.Alerts=action.payload??[];
             }).addCase(fetchAlerts.rejected,(state,action)=>{
                 state.status="failed";

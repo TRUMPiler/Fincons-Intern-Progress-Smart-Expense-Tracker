@@ -1,5 +1,5 @@
 import express from "express";
-import cronjob from "../services/cronjob";
+import cronjob from "../services/cronjob.js";
 
 
 const router = express.Router();

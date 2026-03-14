@@ -1,4 +1,4 @@
-import Response from '../utils/Response';
+import Response from '../utils/Response.js';
 class CronJobService{
     SendReq=async(req,res,next)=>{
         try{

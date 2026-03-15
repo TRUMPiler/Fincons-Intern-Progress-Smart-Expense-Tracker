@@ -3,7 +3,7 @@ import authService from "./authService";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
-  withCredentials: true, // Enable automatic cookie transmission for auth
+  withCredentials: true, 
 });
 
 let isRefreshing = false;
@@ -72,7 +72,7 @@ api.interceptors.response.use(
       } catch (refreshError: any) {
         console.error("❌ Refresh FAILED:", refreshError.response?.status, refreshError.response?.data || refreshError.message);
         processQueue(refreshError, null);
-        authService.logout();
+        await authService.logout();
         isRefreshing = false;
         // window.location.href = "/login";
         return Promise.reject(refreshError);
@@ -81,8 +81,8 @@ api.interceptors.response.use(
 
     // For other errors, if user is authenticated and token is missing, redirect to login
     if (error.response?.status === 401 && authService.isLoggedIn()) {
-      authService.logout();
-      // window.location.href = "/login";
+      await authService.logout();
+      window.location.href = "/login";
     }
 
     return Promise.reject(error);

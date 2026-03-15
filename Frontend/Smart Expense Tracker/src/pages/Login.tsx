@@ -58,11 +58,12 @@ export default function Login() {
 				console.log("📦 Response Data:", response.data);
 				console.log("📦 Response Data.data:", response.data.data);
 				
-				const { user, accessToken, refreshToken } = response.data.data;
+				const { user, accessToken } = response.data.data;
 				
 				console.log("👤 User:", user);
 				console.log("🔑 AccessToken:", accessToken ? "EXISTS ✓" : "MISSING ✗");
-				console.log("🔄 RefreshToken:", refreshToken ? "EXISTS ✓" : "MISSING ✗");
+				console.log("🔄 RefreshToken: Stored in HTTP-only Cookie (secure) ✓");
+				console.log("   ℹ️ Not visible in response (XSS protected)");
 				
 				// if (!user.isVerified) {
 				// 	console.log("Verification Pending");
@@ -72,10 +73,11 @@ export default function Login() {
 				// }
 				
 				console.log("💾 Storing user data via authService.setUser()...");
-				authService.setUser(user, accessToken, refreshToken);
+				authService.setUser(user, accessToken);
 				console.log("✅ Stored! Checking localStorage...");
-				console.log("📍 localStorage.refreshToken:", localStorage.getItem("refreshToken") ? "EXISTS ✓" : "MISSING ✗");
+				console.log("📍 localStorage.accessToken:", localStorage.getItem("accessToken") ? "EXISTS ✓" : "MISSING ✗");
 				console.log("📍 localStorage.user:", localStorage.getItem("user") ? "EXISTS ✓" : "MISSING ✗");
+				console.log("🍪 Refresh Token: In HTTP-only cookie (auto-sent by browser)");
 				
 			
 				sessionStorage.setItem("jwtToken", accessToken);

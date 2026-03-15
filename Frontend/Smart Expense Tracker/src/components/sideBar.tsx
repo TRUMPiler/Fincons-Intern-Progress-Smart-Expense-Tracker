@@ -110,8 +110,8 @@ export default function SidebarExample() {
             <label className="dark:text-white">{localStorage.getItem("name")?.toUpperCase()}</label>
             <button
               className="bg-black text-center p-2 text-white rounded-lg dark:border dark:border-white"
-              onClick={() => {
-                authService.logout();
+              onClick={async () => {
+                await authService.logout();
                 sessionStorage.clear();
                 window.location.href = "/login"
               }}

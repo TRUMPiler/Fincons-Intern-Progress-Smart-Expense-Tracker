@@ -20,7 +20,7 @@ class AuthService {
    * Store access token and user info in localStorage
    * Refresh token is now stored in HTTP-only cookie by backend
    */
-  setUser(user: AuthUser, accessToken: string, refreshToken?: string): void {
+  setUser(user: AuthUser, accessToken: string): void {
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem(this.accessTokenKey, accessToken);
     localStorage.setItem("id", user._id);
@@ -85,11 +85,11 @@ class AuthService {
     localStorage.removeItem("name");
     localStorage.removeItem("email");
     
-    // Call backend logout endpoint to clear HTTP-only cookie
+
     try {
       await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, {
         method: 'POST',
-        credentials: 'include', // Send cookies with request
+        credentials: 'include', 
         headers: {
           'Content-Type': 'application/json'
         }

@@ -66,7 +66,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
     const toast = useRef<Toast | null>(null);
     useEffect(() => {
     
-        const JwtToken = sessionStorage.getItem("jwtToken");
+        // const JwtToken = sessionStorage.getItem("jwtToken");
         const userId = sessionStorage.getItem("id");
         if(!userId)
         {
@@ -176,7 +176,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
         }
 
         try {
-            const JwtToken = sessionStorage.getItem('jwtToken');
+            // const JwtToken = sessionStorage.getItem('jwtToken');
             const userId = sessionStorage.getItem('id');
             await api.put(`/api/transcation/${updated._id}`, { ...updated, userId }, {
                 headers: { Accept: 'application/json' },

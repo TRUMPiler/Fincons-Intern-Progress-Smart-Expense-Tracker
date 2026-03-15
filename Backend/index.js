@@ -24,13 +24,13 @@ app.use(express.json());
 
 // CORS configuration for token refresh with credentials
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173'||'https://smart-expense-tracker-xi-seven.vercel.app/login',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Parse cookies (for HTTP-only refresh token)
+
 app.use(cookieParser());
 app.use("/api/auth",authRoutes);
 app.use("/api/cronJob",CronJobRouter);

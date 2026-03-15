@@ -54,6 +54,18 @@ class UserService {
             throw err;
         }
     }
+
+    async getUserById(id) {
+        try {
+            const user = await UserSchema.findById(id);
+            if (!user) {
+                throw new Error("User not found", { statusCode: 404 });
+            }
+            return user;
+        } catch (err) {
+            throw err;
+        }
+    }
 }
 
 export default new UserService();

@@ -1,12 +1,11 @@
-import axios from "axios";
+import api from "../lib/axiosInstance";
 import { useEffect, type FC } from "react";
 import { useParams } from "react-router";
 
 const verifyUser: FC = () => {
     const { id } = useParams();
-    const Base_URL = import.meta.env.VITE_BACKEND_URL;
     useEffect(() => {
-        axios.get(Base_URL + "/api/user/verify/" + id, {
+        api.get(`/api/user/verify/${id}`, {
             headers: {
                 Accept: "application/text"
             }

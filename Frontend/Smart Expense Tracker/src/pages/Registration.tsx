@@ -1,5 +1,5 @@
 
-import axios from 'axios';
+import api from '../lib/axiosInstance';
 import { Password } from 'primereact/password';
 import { Toast } from 'primereact/toast';
 import React, { useRef, useState } from 'react';
@@ -50,10 +50,9 @@ export default function Registration() {
 			setErrors(newErrors);
 			return;
 		}
-        const baseurl=import.meta.env.VITE_BACKEND_URL;
-        axios.post(baseurl+"/api/user/register",{name:form.name,email:form.email,password:form.password},{headers:{
-            Accept:"application/json"
-        }}).then((response)=>{
+        api.post("/api/user/register", { name: form.name, email: form.email, password: form.password }, { headers: {
+            Accept: "application/json"
+        } }).then((response) => {
             console.log(response);
             toast.current?.show({severity:"success",detail:"Registeration Success",summary:"You're Registration was a success\n Please wait for Verification Email"});
         })

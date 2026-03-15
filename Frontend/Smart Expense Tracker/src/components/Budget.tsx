@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../lib/axiosInstance";
 import { useEffect, useRef, useState, type FC } from "react";
 import { ProgressBar } from "primereact/progressbar";
 import { Card } from "primereact/card";
@@ -39,17 +39,11 @@ const Budget: FC = () => {
 
   useEffect(() => {
     const userid = sessionStorage.getItem("id");
-    const JwtToken = sessionStorage.getItem("jwtToken");
-  
     if (!userid){
       window.location.href='/login';
     }
-    axios
-      .get(`${import.meta.env.VITE_BACKEND_URL}/api/budget/${userid}`, {
-        headers: {
-          Authorization: `Bearer ${JwtToken}`,
-        },
-      })
+    api
+      .get(`/api/budget/${userid}`)
       .then((response) => {
         if (response?.data?.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
           const fetchedBudgets = response.data.data;
@@ -59,9 +53,8 @@ const Budget: FC = () => {
               const categoryId = getCategoryId(budget.categoryId);
               const categoryName = getCategoryName(budget.categoryId) || budget.categoryName;
               try {
-                const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/budget/usage`, {
-                  params: { userId: userid, categoryId, month: budget.month + 1, year: budget.year },
-                  headers: { Authorization: `Bearer ${JwtToken}` },
+                const { data } = await api.get(`/api/budget/usage`, {
+                  params: { userId: userid, categoryId, month: budget.month + 1, year: budget.year }
                 });
                 console.log(budget.month);
                 return { ...budget, categoryId, categoryName, spent: data.data?.spent ?? 0, remaining: data.data?.remaining ?? budget.limit };
@@ -77,11 +70,7 @@ const Budget: FC = () => {
         console.log("Budget fetch failed, using sample data", error);
       });
 
-    axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/category/?userId=${userid}`, {
-      headers: {
-        Authorization: `Bearer ${JwtToken}`,
-      },
-    })
+    api.get(`/api/category/?userId=${userid}`)
       .then((response) => {
         console.log(response);
         const categories = response?.data?.data || [];
@@ -93,8 +82,7 @@ const Budget: FC = () => {
   }, []);
 
    const handleUpdate = () => {
-    const JwtToken = sessionStorage.getItem("jwtToken");
-    axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/budget/`+budgetId, {
+    api.put(`/api/budget/`+budgetId, {
       userId: sessionStorage.getItem("id"),
       categoryId: budgetCategory,
       limit: Number(limit),
@@ -102,8 +90,7 @@ const Budget: FC = () => {
       year: new Date().getFullYear(),
     }, {
       headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${JwtToken}`,
+        Accept: "application/json"
       }
     }).then((response) => {
       if (response.status === 200) {
@@ -137,8 +124,7 @@ const Budget: FC = () => {
   }
 
   const handleSubmit = () => {
-    const JwtToken = sessionStorage.getItem("jwtToken");
-    axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/budget`, {
+    api.post(`/api/budget`, {
       userId: sessionStorage.getItem("id"),
       categoryId: budgetCategory,
       limit: Number(limit),
@@ -146,8 +132,7 @@ const Budget: FC = () => {
       year: new Date().getFullYear(),
     }, {
       headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${JwtToken}`,
+        Accept: "application/json"
       }
     }).then((response) => {
       if (response.status === 201) {
@@ -180,9 +165,8 @@ const Budget: FC = () => {
 
   const createCategory = async (name: string) => {
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/category`, 
-        { name, userId: sessionStorage.getItem("id") }, 
-        { headers: { Authorization: `Bearer ${sessionStorage.getItem("jwtToken")}` } }
+      const { data } = await api.post(`/api/category`, 
+        { name, userId: sessionStorage.getItem("id") }
       );
       const created = data?.data ?? data;
       const newOpt = { label: created.name || name, value: created._id || Math.random().toString(36).slice(2) };

@@ -17,14 +17,16 @@ class AuthService {
   private accessTokenKey = "accessToken";
 
   /**
-   * Store access token in memory and user info in localStorage
+   * Store access token and user info in localStorage
+   * Refresh token is now stored in HTTP-only cookie by backend
    */
-  setUser(user: AuthUser, accessToken: string): void {
+  setUser(user: AuthUser, accessToken: string, refreshToken?: string): void {
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem(this.accessTokenKey, accessToken);
     localStorage.setItem("id", user._id);
     localStorage.setItem("name", user.name);
     localStorage.setItem("email", user.email);
+    // Refresh token is now in HTTP-only cookie, not stored in localStorage
   }
 
   /**
@@ -32,6 +34,15 @@ class AuthService {
    */
   getAccessToken(): string | null {
     return localStorage.getItem(this.accessTokenKey);
+  }
+
+  /**
+   * Get refresh token
+   * Returns null - refresh token is stored in HTTP-only cookie by backend
+   * Browser auto-sends it on requests, so we don't retrieve it manually
+   */
+  getRefreshToken(): string | null {
+    return null;
   }
 
   /**
@@ -63,13 +74,31 @@ class AuthService {
 
   /**
    * Clear all auth data on logout
+   * Refresh token in HTTP-only cookie is handled by backend
    */
-  logout(): void {
+  async logout(): Promise<void> {
+    console.log("🚪 LOGOUT CALLED - Clearing all auth data from localStorage");
+    console.trace("   Stack trace:");
     localStorage.removeItem(this.accessTokenKey);
     localStorage.removeItem("user");
     localStorage.removeItem("id");
     localStorage.removeItem("name");
     localStorage.removeItem("email");
+    
+    // Call backend logout endpoint to clear HTTP-only cookie
+    try {
+      await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include', // Send cookies with request
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      console.error("Backend logout failed:", error);
+    }
+    
+    console.log("✓ All auth data cleared");
   }
 }
 

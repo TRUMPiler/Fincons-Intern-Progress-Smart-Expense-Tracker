@@ -22,6 +22,7 @@ import {
 import { createContext, useContext, useRef, type Dispatch, type SetStateAction } from "react"
 import { NavLink } from "react-router"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import authService from "../lib/authService";
 
 import { Toast } from "primereact/toast";
 
@@ -100,17 +101,18 @@ export default function SidebarExample() {
       </SidebarContent>
 
       <SidebarFooter>
-        {sessionStorage.getItem("jwtToken") ? (
+        {authService.isLoggedIn() ? (
           <div className="flex items-center justify-between gap-3 ">
             <Avatar size="lg" className="">
               <AvatarImage src="https://png.pngtree.com/png-vector/20220709/ourmid/pngtree-businessman-user-avatar-wearing-suit-with-red-tie-png-image_5809521.png" />
               <AvatarFallback>NO</AvatarFallback>
             </Avatar>
-            <label className="dark:text-white">{sessionStorage.getItem("name")?.toUpperCase()}</label>
+            <label className="dark:text-white">{localStorage.getItem("name")?.toUpperCase()}</label>
             <button
               className="bg-black text-center p-2 text-white rounded-lg dark:border dark:border-white"
               onClick={() => {
-                sessionStorage.clear()
+                authService.logout();
+                sessionStorage.clear();
                 window.location.href = "/login"
               }}
             >

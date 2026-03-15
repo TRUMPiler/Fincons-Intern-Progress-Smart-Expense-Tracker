@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import axios from 'axios'
+import api from '../../lib/axiosInstance'
 
 export interface AiChat {
     _id: string;
@@ -26,13 +26,8 @@ const initialState: ChatState = {
 export const fetchFirstChat = createAsyncThunk<AiChat, void, { rejectValue: string }>("chat/intialchat",
     async (_, thunkAPI) => {
         try {
-            const jwt = sessionStorage.getItem("jwtToken");
             const userid = sessionStorage.getItem("id");
-            const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/chats/first/` + userid, {
-                headers: {
-                    Authorization: `Bearer ${jwt}`
-                }
-            });
+            const res = await api.get(`/api/chats/first/` + userid);
             return res.data.data;
         } catch (err: any) {
             return thunkAPI.rejectWithValue(
@@ -45,13 +40,8 @@ export const fetchFirstChat = createAsyncThunk<AiChat, void, { rejectValue: stri
 export const fetchChats = createAsyncThunk<AiChat[], void, { rejectValue: string }>("chat/fetchChats",
     async (_, thunkAPI) => {
         try {
-            const jwt = sessionStorage.getItem("jwtToken");
             const userid = sessionStorage.getItem("id");
-            const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/chats/` + userid, {
-                headers: {
-                    Authorization: `Bearer ${jwt}`
-                }
-            });
+            const res = await api.get(`/api/chats/` + userid);
             return res.data.data ?? [];
         } catch (err: any) {
             return thunkAPI.rejectWithValue(
@@ -64,13 +54,8 @@ export const fetchChats = createAsyncThunk<AiChat[], void, { rejectValue: string
 export const sendChat = createAsyncThunk<AiChat[], { message: string }, { rejectValue: string }>("chat/send",
     async (payload, thunkAPI) => {
         try {
-            const jwt = sessionStorage.getItem("jwtToken");
             const userid = sessionStorage.getItem("id");
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/chats/`, { userId: userid, message: payload.message }, {
-                headers: {
-                    Authorization: `Bearer ${jwt}`
-                }
-            });
+            const res = await api.post(`/api/chats/`, { userId: userid, message: payload.message });
             return res.data.data ?? [];
         } catch (err: any) {
             return thunkAPI.rejectWithValue(

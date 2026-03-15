@@ -9,11 +9,21 @@ class UserController {
 
         if (!UserLogin) {
             console.log(UserLogin);
-            res.status(404).json(Response.error("Data is Not Found", 404));
+            return res.status(404).json(Response.error("Data is Not Found", 404));
         }
         console.log(UserLogin);
-        const jwtToken = Token.CreateToken(UserLogin._id, req.body.email, req.body.password, req.ip);
-        res.status(200).json(Response.success({ UserLogin, jwtToken }, "User Login Success", 200));
+        const accessToken = Token.createAccessToken(UserLogin._id, UserLogin.email, UserLogin.isVerified, req.ip);
+        const refreshToken = Token.createRefreshToken(UserLogin._id);
+        
+        // Set refresh token in HTTP-only cookie (secure against XSS)
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,      // Cannot be accessed by JavaScript (XSS protection)
+            secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+            sameSite: 'lax',     // CSRF protection
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+        
+        res.status(200).json(Response.success({ user: { _id: UserLogin._id, email: UserLogin.email, name: UserLogin.name }, accessToken }, "User Login Success", 200));
     }
 
     async Register(req, res, next) {

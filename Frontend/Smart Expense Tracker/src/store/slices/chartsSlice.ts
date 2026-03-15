@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import axios from 'axios'
+import api from '../../lib/axiosInstance'
 
 export type SpendingCategory = { total: number; category: string }
 export type MonthTrend = { totalSpent: number; month: number; year: number }
@@ -44,14 +44,12 @@ export const fetchAlerts = createAsyncThunk<Alert[], void, { rejectValue: string
     async (_, thunkAPI) => {
         try {
             console.log("fetch called");
-            const jwt = sessionStorage.getItem("jwtToken");
             const userid = sessionStorage.getItem("id");
 
             if (!userid) return thunkAPI.rejectWithValue("No user id");
-            const res=await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/alert/`+userid,{
+            const res=await api.get(`/api/alert/`+userid,{
                 headers:{
-                    "Accept":"application/json",
-                    "Authorization":`Bearer ${jwt}`
+                    "Accept":"application/json"
                 }
             });
             console.log(res);
@@ -70,18 +68,12 @@ export const fetchBudgetWiseUsage = createAsyncThunk<
     "charts/fetchBudgetWise",
     async (_, thunkApi) => {
         try {
-            const jwt = sessionStorage.getItem("jwtToken");
             const userid = sessionStorage.getItem("id");
 
             if (!userid) return thunkApi.rejectWithValue("No user id");
 
-            const response = await axios.get(
-                `${import.meta.env.VITE_BACKEND_URL}/api/budget/${userid}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${jwt}`,
-                    },
-                }
+            const response = await api.get(
+                `/api/budget/${userid}`
             );
 
             const fetchedBudgets = response?.data?.data ?? [];
@@ -97,18 +89,15 @@ export const fetchBudgetWiseUsage = createAsyncThunk<
                         getCategoryName(budget.categoryId) || budget.categoryName;
 
                     try {
-                        const { data } = await axios.get(
-                            `${import.meta.env.VITE_BACKEND_URL}/api/budget/usage`,
+                        const { data } = await api.get(
+                            `/api/budget/usage`,
                             {
                                 params: {
                                     userId: userid,
                                     categoryId,
                                     month: budget.month + 1,
                                     year: budget.year,
-                                },
-                                headers: {
-                                    Authorization: `Bearer ${jwt}`,
-                                },
+                                }
                             }
                         );
 
@@ -146,11 +135,10 @@ export const fetchCategorySpending = createAsyncThunk<SpendingCategory[], void, 
     'charts/fetchCategorySpending',
     async (_, thunkAPI) => {
         try {
-            const jwt = sessionStorage.getItem('jwtToken')
             const userid = sessionStorage.getItem('id')
             if (!userid) return thunkAPI.rejectWithValue('No user id')
-            const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/charts/cspending/${userid}`, {
-                headers: { Accept: 'application/json', Authorization: `Bearer ${jwt}` },
+            const res = await api.get(`/api/charts/cspending/${userid}`, {
+                headers: { Accept: 'application/json' },
             })
             return res.data?.data ?? []
         } catch (err: any) {
@@ -163,11 +151,10 @@ export const fetchMonthlyTrend = createAsyncThunk<MonthTrend[], void, { rejectVa
     'charts/fetchMonthlyTrend',
     async (_, thunkAPI) => {
         try {
-            const jwt = sessionStorage.getItem('jwtToken')
             const userid = sessionStorage.getItem('id')
             if (!userid) return thunkAPI.rejectWithValue('No user id')
-            const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/charts/monthlytrend/${userid}`, {
-                headers: { Accept: 'application/json', Authorization: `Bearer ${jwt}` },
+            const res = await api.get(`/api/charts/monthlytrend/${userid}`, {
+                headers: { Accept: 'application/json' },
             })
             return res.data?.data ?? []
         } catch (err: any) {
@@ -180,11 +167,10 @@ export const fetchPredict = createAsyncThunk<number | null, void, { rejectValue:
     'charts/fetchPredict',
     async (_, thunkAPI) => {
         try {
-            const jwt = sessionStorage.getItem('jwtToken')
             const userid = sessionStorage.getItem('id')
             if (!userid) return thunkAPI.rejectWithValue('No user id')
-            const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/charts/predict/${userid}`, {
-                headers: { Accept: 'application/json', Authorization: `Bearer ${jwt}` },
+            const res = await api.get(`/api/charts/predict/${userid}`, {
+                headers: { Accept: 'application/json' },
             })
 
             return res.data?.data?.data ?? res.data?.data ?? null
@@ -198,11 +184,10 @@ export const fetchTotals = createAsyncThunk<Totals, void, { rejectValue: string 
     'charts/fetchTotals',
     async (_, thunkAPI) => {
         try {
-            const jwt = sessionStorage.getItem('jwtToken')
             const userid = sessionStorage.getItem('id')
             if (!userid) return thunkAPI.rejectWithValue('No user id')
-            const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/charts/${userid}`, {
-                headers: { Accept: 'application/json', Authorization: `Bearer ${jwt}` },
+            const res = await api.get(`/api/charts/${userid}`, {
+                headers: { Accept: 'application/json' },
             })
             const payload = res.data?.data ?? res.data
             return {

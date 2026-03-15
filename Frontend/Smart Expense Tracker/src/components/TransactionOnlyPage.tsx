@@ -8,7 +8,7 @@ import { InputText } from "primereact/inputtext";
 import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from "primereact/dropdown";
 import {Toast} from "primereact/toast";
-import axios from "axios";
+import api from "../lib/axiosInstance";
 import { Card } from "primereact/card";
 type CategoryProp={
     name:string;
@@ -68,13 +68,12 @@ const Transcation:FC=()=>
         {
             window.location.href="/login";
         }
-        axios
+        api
             .get<TranscationType[]>(
-                `${import.meta.env.VITE_BACKEND_URL}/api/transcation/${userId}`,
+                `/api/transcation/${userId}`,
                 {
                     headers: {
-                        Accept: "application/json",
-                        Authorization: `Bearer ${JwtToken}`,
+                        Accept: "application/json"
                     },
                 }
             )
@@ -88,11 +87,7 @@ const Transcation:FC=()=>
             .catch((err) => console.error(err));
 
 
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/category/?userId=${userId}`, {
-            headers: {
-                Authorization: `Bearer ${JwtToken}`,
-            },
-        })
+        api.get(`/api/category/?userId=${userId}`)
         .then((res) => {
             const cats = res?.data?.data ?? [];
             const opts = cats.map((c: any) => ({ label: c.name, value: c._id }));
@@ -111,7 +106,6 @@ const Transcation:FC=()=>
 
     const handleAddSubmit = async () => {
         try {
-            const JwtToken = sessionStorage.getItem("jwtToken");
             const userId = sessionStorage.getItem("id");
             const payload = {
                 userId,
@@ -122,10 +116,9 @@ const Transcation:FC=()=>
                 date: dateVal,
             };
 
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/transcation`, payload, {
+            const res = await api.post(`/api/transcation`, payload, {
                 headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${JwtToken}`,
+                    Accept: "application/json"
                 },
             });
 
@@ -146,10 +139,7 @@ const Transcation:FC=()=>
     const handleDelete = async (id: string | number) => {
         if (!confirm("Delete this transaction?")) return;
         try {
-            const JwtToken = sessionStorage.getItem("jwtToken");
-            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/transcation/${id}`, {
-                headers: { Authorization: `Bearer ${JwtToken}` },
-            }).then((response)=>{
+            await api.delete(`/api/transcation/${id}`).then((response)=>{
                 console.log(response);
             })
             setTranscation((prev) => prev.filter((t) => t._id !== id));
@@ -173,8 +163,8 @@ const Transcation:FC=()=>
         try {
             const JwtToken = sessionStorage.getItem('jwtToken');
             const userId = sessionStorage.getItem('id');
-            await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/transcation/${updated._id}`, { ...updated, userId }, {
-                headers: { Authorization: `Bearer ${JwtToken}`, Accept: 'application/json' },
+            await api.put(`/api/transcation/${updated._id}`, { ...updated, userId }, {
+                headers: { Accept: 'application/json' },
             });
 
             setTranscation((prev) => {
@@ -193,9 +183,8 @@ const Transcation:FC=()=>
     };
   const createCategory = async (name: string) => {
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/category`, 
-        { name, userId: sessionStorage.getItem("id") }, 
-        { headers: { Authorization: `Bearer ${sessionStorage.getItem("jwtToken")}` } }
+      const { data } = await api.post(`/api/category`, 
+        { name, userId: sessionStorage.getItem("id") }
       );
       const created = data?.data ?? data;
       const newOpt = { label: created.name || name, value: created._id || Math.random().toString(36).slice(2) };

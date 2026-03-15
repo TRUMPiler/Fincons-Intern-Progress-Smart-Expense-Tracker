@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../lib/axiosInstance";
 import { Column, type ColumnEditorOptions } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Button } from "primereact/button";
@@ -70,7 +70,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
         const userId = sessionStorage.getItem("id");
         if(!userId)
         {
-            window.location.href="/login";
+            // window.location.href="/login";
         }
         // axios
         //     .get<TranscationType[]>(
@@ -92,11 +92,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
         //     .catch((err) => console.error(err));
 
 
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/category/?userId=${userId}`, {
-            headers: {
-                Authorization: `Bearer ${JwtToken}`,
-            },
-        })
+        api.get(`/api/category/?userId=${userId}`)
         .then((res) => {
             const cats = res?.data?.data ?? [];
             const opts = cats.map((c: any) => ({ label: c.name, value: c._id }));
@@ -120,7 +116,6 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
                 toast?.current?.show({severity:"error",summary:"Details Not Complete",detail:"Please give all the data"});
                 return;
             }
-            const JwtToken = sessionStorage.getItem("jwtToken");
             const userId = sessionStorage.getItem("id");
             const payload = {
                 userId,
@@ -131,10 +126,9 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
                 date: dateVal,
             };
 
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/transcation`, payload, {
+            const res = await api.post(`/api/transcation`, payload, {
                 headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${JwtToken}`,
+                    Accept: "application/json"
                 },
             });
 
@@ -161,10 +155,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
     const handleDelete = async (id: string | number) => {
         if (!confirm("Delete this transaction?")) return;
         try {
-            const JwtToken = sessionStorage.getItem("jwtToken");
-            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/transcation/${id}`, {
-                headers: { Authorization: `Bearer ${JwtToken}` },
-            }).then((response)=>{
+            await api.delete(`/api/transcation/${id}`).then((response)=>{
                 console.log(response);
             })
             setTranscations((prev) => prev.filter((t) => t._id !== id));
@@ -187,8 +178,8 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
         try {
             const JwtToken = sessionStorage.getItem('jwtToken');
             const userId = sessionStorage.getItem('id');
-            await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/transcation/${updated._id}`, { ...updated, userId }, {
-                headers: { Authorization: `Bearer ${JwtToken}`, Accept: 'application/json' },
+            await api.put(`/api/transcation/${updated._id}`, { ...updated, userId }, {
+                headers: { Accept: 'application/json' },
             });
 
             setTranscations((prev) => {
@@ -207,9 +198,8 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
     };
   const createCategory = async (name: string) => {
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/category`, 
-        { name, userId: sessionStorage.getItem("id") }, 
-        { headers: { Authorization: `Bearer ${sessionStorage.getItem("jwtToken")}` } }
+      const { data } = await api.post(`/api/category`, 
+        { name, userId: sessionStorage.getItem("id") }
       );
       const created = data?.data ?? data;
       const newOpt = { label: created.name || name, value: created._id || Math.random().toString(36).slice(2) };

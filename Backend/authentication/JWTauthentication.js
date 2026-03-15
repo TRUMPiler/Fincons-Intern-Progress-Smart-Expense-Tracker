@@ -1,20 +1,39 @@
 import jwt from "jsonwebtoken";
 
 class JwtAuth {
-    CreateToken(userId, UserEmail, isVerified, ip) {
-        const payload = { userid: userId, email: UserEmail, verified: isVerified, ip: ip };
-        const token = jwt.sign(payload, process.env.JWTSECRET, {
-            expiresIn: "3h",
+
+    createAccessToken(userId, email, isVerified, ip) {
+        const payload = { userId, email, verified: isVerified, ip };
+
+        return jwt.sign(payload, process.env.JWTSECRET, {
+            expiresIn: "15m"
         });
-        return token;
     }
+
+    createRefreshToken(userId) {
+        return jwt.sign(
+            { userId },
+            process.env.JWT_REFRESH_SECRET,
+            { expiresIn: "7d" }
+        );
+    }
+
+    decodeAccessToken(token) {
+        return jwt.verify(token, process.env.JWTSECRET);
+    }
+
+    decodeRefreshToken(token) {
+        return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    }
+
+    // Alias for backward compatibility
+    CreateToken(userId, email, isVerified, ip) {
+        return this.createAccessToken(userId, email, isVerified, ip);
+    }
+
     decodeJwtToken(token) {
-        try {
-            return jwt.verify(token, process.env.JWTSECRET);
-        } catch (error) {
-            throw new Error("Invalid token");
-        }
+        return this.decodeAccessToken(token);
     }
 }
-
+ 
 export default new JwtAuth();

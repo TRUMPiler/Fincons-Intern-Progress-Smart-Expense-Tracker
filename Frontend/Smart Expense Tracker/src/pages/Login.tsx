@@ -1,5 +1,6 @@
-import axios from 'axios';
 
+import api from '../lib/axiosInstance';
+import authService from '../lib/authService';
 import React, { useRef, useState } from 'react';
 import { Toast } from 'primereact/toast';
 import { Password } from 'primereact/password';
@@ -44,30 +45,45 @@ export default function Login() {
 			setErrors(newErrors);
 			return;
 		}
-		const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 		setLoading(true);
 
-		await axios.post(BASE_URL + "/api/user/", { email: form.email, password: form.password }, {
+		await api.post("/api/user/", { email: form.email, password: form.password }, {
 			headers: {
 				"Accept": "application/JSON",
 			}
-		}).then((response) => {
-			console.log(response);
+		}).then((response: any) => {
+			console.log("🔐 Login Response:", response);
 
 			if (response.status == 200) {
-				console.log(response);
-				if (!response.data.data.UserLogin.isVerified) {
-					console.log("Verification Pending");
-					toast.current?.show({ severity: "info", summary: "Pending Verification", detail: "You're Verification is pending please Complete" });
-					setMessage(`Please Verify you're email to continue`);
-					return;
-				}
-				console.log(response);
-				sessionStorage.setItem("jwtToken", response.data.data.jwtToken);
-				sessionStorage.setItem("id",response.data.data.UserLogin._id);
-				sessionStorage.setItem("name", response.data.data.UserLogin.name);
-				sessionStorage.setItem("email", response.data.data.UserLogin.email);
-				toast.current?.show({ severity: "success", summary: "Login Success", detail: "Welcome "+response.data.data.UserLogin.name });
+				console.log("📦 Response Data:", response.data);
+				console.log("📦 Response Data.data:", response.data.data);
+				
+				const { user, accessToken, refreshToken } = response.data.data;
+				
+				console.log("👤 User:", user);
+				console.log("🔑 AccessToken:", accessToken ? "EXISTS ✓" : "MISSING ✗");
+				console.log("🔄 RefreshToken:", refreshToken ? "EXISTS ✓" : "MISSING ✗");
+				
+				// if (!user.isVerified) {
+				// 	console.log("Verification Pending");
+				// 	toast.current?.show({ severity: "info", summary: "Pending Verification", detail: "You're Verification is pending please Complete" });
+				// 	setMessage(`Please Verify you're email to continue`);
+				// 	return;
+				// }
+				
+				console.log("💾 Storing user data via authService.setUser()...");
+				authService.setUser(user, accessToken, refreshToken);
+				console.log("✅ Stored! Checking localStorage...");
+				console.log("📍 localStorage.refreshToken:", localStorage.getItem("refreshToken") ? "EXISTS ✓" : "MISSING ✗");
+				console.log("📍 localStorage.user:", localStorage.getItem("user") ? "EXISTS ✓" : "MISSING ✗");
+				
+			
+				sessionStorage.setItem("jwtToken", accessToken);
+				sessionStorage.setItem("id", user._id);
+				sessionStorage.setItem("name", user.name);
+				sessionStorage.setItem("email", user.email);
+				
+				toast.current?.show({ severity: "success", summary: "Login Success", detail: "Welcome "+user.name });
 				setTimeout(()=>{
 					window.location.href="/";
 				},3000);

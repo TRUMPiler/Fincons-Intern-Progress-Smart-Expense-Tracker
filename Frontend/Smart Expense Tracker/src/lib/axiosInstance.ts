@@ -1,10 +1,9 @@
 import axios from "axios";
 import authService from "./authService";
 
-// Create axios instance with base URL
 const api = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
-  withCredentials: true, // Allow cookies (refreshToken) to be sent/received
+  withCredentials: true, // Enable automatic cookie transmission for auth
 });
 
 let isRefreshing = false;
@@ -22,16 +21,15 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Response interceptor: handle 401 and refresh token
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If error is 401 and not a refresh request, try to refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // Wait for refresh to complete
+
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then((token) => {
@@ -44,27 +42,39 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint
-        const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/user/refresh`,
-          {},
-          { withCredentials: true }
+
+        const userId = authService.getUser()?._id;
+        
+        console.log("🔄 Refresh attempt - userId:", userId);
+        
+        if (!userId) {
+          console.error("❌ Refresh failed - missing userId");
+          throw new Error("User ID missing");
+        }
+
+        console.log("📤 Calling /api/auth/refresh endpoint...");
+        // Refresh token is in HTTP-only cookie, automatically sent by browser
+        const response = await api.post(
+          `/api/auth/refresh`,
+          { userId }
         );
 
+        console.log("✅ Refresh successful!", response.status);
         const { accessToken } = response.data.data;
         authService.updateAccessToken(accessToken);
 
-        // Update the original request with new token
+   
         originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
         processQueue(null, accessToken);
 
         isRefreshing = false;
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch (refreshError: any) {
+        console.error("❌ Refresh FAILED:", refreshError.response?.status, refreshError.response?.data || refreshError.message);
         processQueue(refreshError, null);
         authService.logout();
         isRefreshing = false;
-        window.location.href = "/login";
+        // window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
@@ -72,7 +82,7 @@ api.interceptors.response.use(
     // For other errors, if user is authenticated and token is missing, redirect to login
     if (error.response?.status === 401 && authService.isLoggedIn()) {
       authService.logout();
-      window.location.href = "/login";
+      // window.location.href = "/login";
     }
 
     return Promise.reject(error);

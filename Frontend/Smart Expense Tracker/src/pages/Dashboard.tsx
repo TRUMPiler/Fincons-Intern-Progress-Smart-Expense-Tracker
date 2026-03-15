@@ -2,7 +2,7 @@ import { useEffect,  useRef, useState, type FC, type Ref } from "react";
 import Transcation from "../components/Transactions";
 import { Card } from "primereact/card";
 
-import axios from "axios";
+import api from "../lib/axiosInstance";
 import AlertGif from "../assets/downloadAlert.gif";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { fetchAlerts, fetchBudgetWiseUsage, fetchCategorySpending, fetchMonthlyTrend, fetchPredict, fetchTotals, type Alert } from "../store/slices/chartsSlice";
@@ -75,9 +75,9 @@ const DashboardL: FC = () => {
     const recentTransactions = transcations.slice(-5).reverse();
     const accepted = async (alertid:string) => {
         try{
-            const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/alert/`+alertid,{},{
+            const response = await api.put(`/api/alert/`+alertid,{},{
                 headers:{
-                    Authorization:`Bearer ${sessionStorage.getItem("jwtToken")}`
+                    Accept: "application/JSON"
                 }
             });
             if(response.status==200)
@@ -113,34 +113,33 @@ const DashboardL: FC = () => {
     };
   
     useEffect(() => {
-        const JwtToken = sessionStorage.getItem("jwtToken");
         const userId = sessionStorage.getItem("id");
         if (!userId) {
-            window.location.href = "/login";
-            return;
+            // window.location.href = "/login";
+            // return;
         }
 
-        axios
-            .get(`${import.meta.env.VITE_BACKEND_URL}/api/transcation/${userId}`, {
-                headers: { Accept: "application/json", Authorization: `Bearer ${JwtToken}` },
+        api
+            .get(`/api/transcation/${userId}`, {
+                headers: { Accept: "application/json" },
             })
-            .then((response) => {
+            .then((response: any) => {
                 const payload = response.data as any;
                 const rows: TranscationType[] = Array.isArray(payload) ? payload : payload?.data ?? [];
                 setTranscations(rows);
             })
-            .catch((err) => console.error(err));
+            .catch((err: any) => console.error(err));
 
-        axios
-            .get(`${import.meta.env.VITE_BACKEND_URL}/api/category/?userId=${userId}`, {
-                headers: { Authorization: `Bearer ${JwtToken}` },
+        api
+            .get(`/api/category/?userId=${userId}`, {
+                headers: { Accept: "application/json" },
             })
-            .then((res) => {
+            .then((res: any) => {
                 const cats = res?.data?.data ?? [];
                 const opts = cats.map((c: any) => ({ label: c.name, value: c._id }));
                 setCategoryOptions(opts);
             })
-            .catch((err) => console.error("Category fetch failed", err));
+            .catch((err: any) => console.error("Category fetch failed", err));
     }, []);
 
     useEffect(() => {

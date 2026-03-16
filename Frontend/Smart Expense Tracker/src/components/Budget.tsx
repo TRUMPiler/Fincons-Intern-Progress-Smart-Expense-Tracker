@@ -21,11 +21,15 @@ type BudgetProp = {
   remaining?: number;
 };
 type CategoryOption = { label: string; value: string; };
-
+type month={month:number,year:number};
 
 const Budget: FC = () => {
   const [budgetDialogVisible, setBudgetDialogVisible] = useState(false);
     const [budgetUpdateDialogVisible, setUpdateBudgetDialogVisible] = useState(false);
+    const [filterDates,setFilterDates]=useState<month[]>([]);
+   const Months: string[] = ["January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const [filterMonth,setFilterMonth]=useState<number>(0)
+    const [filterYear,setFilterYear]=useState<number>(0)
   const toast = useRef<Toast | null>(null);
   const [budgets, setBudgets] = useState<BudgetProp[]>([]);
   const [budgetCategory, setBudgetCategory] = useState('');
@@ -36,14 +40,14 @@ const Budget: FC = () => {
 
   const getCategoryId = (cat: any) => typeof cat === "string" ? cat : cat?._id ?? cat?.id ?? "";
   const getCategoryName = (cat: any) => typeof cat === "object" && cat ? cat.name ?? cat.label : "";
-
+  
   useEffect(() => {
     const userid = sessionStorage.getItem("id");
     if (!userid){
       window.location.href='/login';
     }
     api
-      .get(`/api/budget/${userid}`)
+      .get(`/api/budget/?userId=${userid}&month=${filterMonth}&year=${filterYear}`)
       .then((response) => {
         if (response?.data?.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
           const fetchedBudgets = response.data.data;
@@ -53,8 +57,11 @@ const Budget: FC = () => {
               const categoryId = getCategoryId(budget.categoryId);
               const categoryName = getCategoryName(budget.categoryId) || budget.categoryName;
               try {
+                const month=filterMonth==0?budget.month+1:filterMonth+1
+                const year=filterYear==0?budget.year:filterYear;
                 const { data } = await api.get(`/api/budget/usage`, {
-                  params: { userId: userid, categoryId, month: budget.month + 1, year: budget.year }
+                
+                  params: { userId: userid, categoryId, month:month, year: year }
                 });
                 console.log(budget.month);
                 return { ...budget, categoryId, categoryName, spent: data.data?.spent ?? 0, remaining: data.data?.remaining ?? budget.limit };
@@ -69,7 +76,11 @@ const Budget: FC = () => {
       .catch((error) => {
         console.log("Budget fetch failed, using sample data", error);
       });
-
+      api.get(`/api/budget/budgetmonths/${userid}`).then((response)=>{
+        console.log(response);
+        console.log(response.data.data);
+        setFilterDates(response.data.data);
+      })
     api.get(`/api/category/?userId=${userid}`)
       .then((response) => {
         console.log(response);
@@ -79,7 +90,7 @@ const Budget: FC = () => {
         setBudgetCategoryOptions(options);
       })
       .catch((err) => console.log("Category fetch failed", err));
-  }, []);
+  }, [,filterMonth,filterYear]);
 
    const handleUpdate = () => {
     api.put(`/api/budget/`+budgetId, {
@@ -193,7 +204,7 @@ const Budget: FC = () => {
   return (
     <div className="flex flex-col items-center w-full min-h-screen gap-6 py-8 px-4 bg-gray-100 dark:bg-black">
       <Toast ref={toast} />
-      
+         
       {/* Create Budget Dialog */}
       <Dialog 
         visible={budgetDialogVisible} 
@@ -202,6 +213,7 @@ const Budget: FC = () => {
         className="w-full max-w-md"
         headerClassName="bg-linear-to-r from-indigo-500 to-purple-500 border-0"
       >
+
         <form className="flex items-center justify-center flex-col gap-6">
           {
             (() => {
@@ -307,6 +319,10 @@ const Budget: FC = () => {
               💰 Budgets
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Manage and track your spending limits</p>
+          </div>
+          <div className="flex gap-2 ">
+               <Dropdown options={filterDates.map(e=>e.month)} value={filterMonth} onChange={(e)=>{setFilterMonth(e.target.value)}} placeholder="Select a Month to fiter Requests" className="bg-white"/>
+                <Dropdown options={Array.from(new Set(filterDates.map(e=>e.year)))} value={filterYear} onChange={(e)=>{setFilterYear(e.target.value)}} placeholder="Select a Year to fiter Requests" className="bg-white"/>
           </div>
           <button 
             className="bg-linear-to-r from-indigo-500 to-purple-500 px-6 py-3 text-white rounded-lg font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all shadow-lg hover:shadow-xl" 

@@ -46,7 +46,50 @@ class BudgetService {
             throw error;
         }
     }
+    async getBudgetMonths(userId)
+    {try{
+        console.log("userId:"+userId);
+        const months=await Budget.aggregate([
+            {
+                $match:{
+                    userId:new mongoose.Types.ObjectId(userId)
+                },
+            },
+                {
+                $group: {
+                    _id: {
+                        year: "$year" ,
+                        month: "$month" 
+                    },
+                
+                },
+            },
+            {
+                $sort: {
+                    "_id.year": 1,
+                    "_id.month": 1
+                }
+            },
 
+            {
+                $project: {
+                    _id: 0,
+                    year: "$_id.year",
+                    month: "$_id.month",
+   
+                }
+            }
+  
+            
+        ]);
+        console.log(months);
+        return months;
+             
+        }catch(error)
+        {
+            throw new Error(error);
+        }
+    }
     async UpdateBudget(budgetId, updatedData) {
         try {
 
@@ -75,12 +118,14 @@ class BudgetService {
         }
     }
 
-    async GetBudgets(userId) {
+    async GetBudgets(userId,month,year) {
         try {
-
-            const budgets = await Budget.find({ userId ,month:new Date().getMonth()+1,year:new Date().getFullYear()})
+            console.log(month);
+            console.log(year);
+            console.log(userId);
+            const budgets = await Budget.find({ userId ,month:month,year:year})
                 .populate("categoryId", "name");
-            console.log("Budgets:"+budgets);
+            // console.log("Budgets:"+budgets);
             return budgets;
 
         } catch (error) {
@@ -158,14 +203,14 @@ class BudgetService {
             ]);
 
             const spent = expenses.length ? expenses[0].totalSpent : 0;
-            console.log(expenses);
+            // console.log(expenses);
             const budget = await Budget.findOne({
                 userId:userId,
                 categoryId:categoryId,
                 month:month-1,
                 year:year
             });
-            console.log(budget);
+            // console.log(budget);
             if (!budget) {
                 return { spent, remaining: 0, limit: 0 };
             }

@@ -8,8 +8,9 @@ router.use(authHandler);
 
 router.get("/usage", BudgetController.GetBudgetUsage);
 router.get("/byCategory", BudgetController.GetBudgetByCategory);
-router.get("/:userId", BudgetController.GetBudgets);
+router.get("/", BudgetController.GetBudgets);
 router.post("/", BudgetController.CreateBudget);
+router.get("/budgetmonths/:userId",BudgetController.GetMonths);
 router.put("/:id", BudgetController.UpdateBudget);
 router.delete("/:id", BudgetController.DeleteBudget);
 

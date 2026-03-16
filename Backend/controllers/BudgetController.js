@@ -11,7 +11,16 @@ class BudgetController {
       next(error);
     }
   }
-
+  async GetMonths(req,res,next)
+  {
+    try{
+      const data=await BudgetService.getBudgetMonths(req.params.userId);
+      return res.status(200).json(Response.success(data,"Budget Months Retrived Successfull",200));
+    }catch(exception)
+    {
+      next(exception);
+    }
+  }
   async UpdateBudget(req, res, next) {
     try {
       const id = req.params.id;
@@ -24,8 +33,11 @@ class BudgetController {
 
   async GetBudgets(req, res, next) {
     try {
-      const userId = req.params.userId;
-      const budgets = await BudgetService.GetBudgets(userId);
+      const userId = req.query.userId;
+      const month=req.query.month==0?(new Date().getMonth()+1):(req.query.month);
+      const year=req.query.year==0?new Date().getFullYear():req.query.year;
+      // console.log(mon)
+      const budgets = await BudgetService.GetBudgets(userId,month,year);
       res.json(Response.success(budgets, "Budgets fetched", 200));
     } catch (error) {
       next(error);

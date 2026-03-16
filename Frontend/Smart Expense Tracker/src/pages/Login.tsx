@@ -89,7 +89,7 @@ export default function Login() {
 				setTimeout(()=>{
 					window.location.href="/";
 				},3000);
-				// window.location.href="/";
+			
 				setMessage(`Logged in as ${form.email}`);
 			}
 		}).catch((error)=>{

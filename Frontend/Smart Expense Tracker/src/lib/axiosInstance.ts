@@ -44,19 +44,20 @@ api.interceptors.response.use(
       try {
 
         const userId = authService.getUser()?._id;
+        const refreshToken = authService.getRefreshToken();
         
-        console.log("🔄 Refresh attempt - userId:", userId);
+        console.log("🔄 Refresh attempt - userId:", userId, "refreshToken exists:", !!refreshToken);
         
-        if (!userId) {
-          console.error("❌ Refresh failed - missing userId");
-          throw new Error("User ID missing");
+        if (!userId || !refreshToken) {
+          console.error("❌ Refresh failed - missing userId or refreshToken");
+          throw new Error("User ID or refresh token missing");
         }
 
         console.log("📤 Calling /api/auth/refresh endpoint...");
-        // Refresh token is in HTTP-only cookie, automatically sent by browser
+
         const response = await api.post(
           `/api/auth/refresh`,
-          { userId }
+          { userId, refreshToken }
         );
 
         console.log("✅ Refresh successful!", response.status);
@@ -79,7 +80,6 @@ api.interceptors.response.use(
       }
     }
 
-    // For other errors, if user is authenticated and token is missing, redirect to login
     if (error.response?.status === 401 && authService.isLoggedIn()) {
       await authService.logout();
       window.location.href = "/login";
@@ -89,7 +89,6 @@ api.interceptors.response.use(
   }
 );
 
-// Request interceptor: Add access token to headers
 api.interceptors.request.use((config) => {
   const token = authService.getAccessToken();
   if (token) {

@@ -15,18 +15,19 @@ export interface AuthResponse {
 
 class AuthService {
   private accessTokenKey = "accessToken";
-
+private refreshTokenKey="refreshToken";
   /**
-   * Store access token and user info in localStorage
-   * Refresh token is now stored in HTTP-only cookie by backend
+   * Store access token, refresh token, and user info in localStorage
    */
   setUser(user: AuthUser, accessToken: string, refreshToken?: string): void {
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem(this.accessTokenKey, accessToken);
+    if (refreshToken) {
+      localStorage.setItem(this.refreshTokenKey, refreshToken);
+    }
     localStorage.setItem("id", user._id);
     localStorage.setItem("name", user.name);
     localStorage.setItem("email", user.email);
-    // Refresh token is now in HTTP-only cookie, not stored in localStorage
   }
 
   /**
@@ -37,12 +38,10 @@ class AuthService {
   }
 
   /**
-   * Get refresh token
-   * Returns null - refresh token is stored in HTTP-only cookie by backend
-   * Browser auto-sends it on requests, so we don't retrieve it manually
+   * Get refresh token from localStorage
    */
   getRefreshToken(): string | null {
-    return null;
+    return localStorage.getItem(this.refreshTokenKey);
   }
 
   /**
@@ -80,6 +79,7 @@ class AuthService {
     console.log("🚪 LOGOUT CALLED - Clearing all auth data from localStorage");
     console.trace("   Stack trace:");
     localStorage.removeItem(this.accessTokenKey);
+    localStorage.removeItem(this.refreshTokenKey);
     localStorage.removeItem("user");
     localStorage.removeItem("id");
     localStorage.removeItem("name");

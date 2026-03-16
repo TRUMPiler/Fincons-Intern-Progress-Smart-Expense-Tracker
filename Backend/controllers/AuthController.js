@@ -5,8 +5,8 @@ class AuthController {
 
     async RefreshToken(req, res, next) {
         try {
-            // Get refresh token from HTTP-only cookie (auto-sent by browser)
-            const refreshToken = req.cookies.refreshToken;
+            // Get refresh token from request body (sent by frontend from localStorage)
+            const refreshToken = req.body.refreshToken;
             const userId = req.body.userId;
             const ip = req.ip;
 
@@ -45,13 +45,7 @@ class AuthController {
 
     async Logout(req, res, next) {
         try {
-            // Clear the HTTP-only refresh token cookie
-            res.clearCookie('refreshToken', {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax'
-            });
-            
+            // Logout just returns success - frontend handles localStorage cleanup
             res.status(200).json(Response.success(null, "Logged out successfully", 200));
         } catch (error) {
             console.error("Logout error:", error.message);

@@ -8,7 +8,7 @@ class LogService {
       return entry;
     } catch (err) {
       console.error("Failed to create log", err);
-      // don't throw to avoid breaking main flow; caller can handle if needed
+    
       return null;
     }
   }

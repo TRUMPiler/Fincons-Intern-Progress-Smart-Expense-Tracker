@@ -17,6 +17,7 @@ import {
   // Users,
   // Settings,
   HelpingHand,
+  LogOut,
 } from "lucide-react"
 
 import { createContext, useContext, useRef, type Dispatch, type SetStateAction } from "react"
@@ -116,7 +117,7 @@ export default function SidebarExample() {
                 window.location.href = "/login"
               }}
             >
-              Sign out
+              <LogOut/>
             </button>
           </div>
         ) : (

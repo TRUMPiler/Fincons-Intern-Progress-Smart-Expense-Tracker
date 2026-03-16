@@ -44,20 +44,20 @@ api.interceptors.response.use(
       try {
 
         const userId = authService.getUser()?._id;
-        const refreshToken = authService.getRefreshToken();
         
-        console.log("🔄 Refresh attempt - userId:", userId, "refreshToken exists:", !!refreshToken);
+        console.log("🔄 Refresh attempt - userId:", userId);
         
-        if (!userId || !refreshToken) {
-          console.error("❌ Refresh failed - missing userId or refreshToken");
-          throw new Error("User ID or refresh token missing");
+        if (!userId) {
+          console.error("❌ Refresh failed - missing userId");
+          throw new Error("User ID missing");
         }
 
         console.log("📤 Calling /api/auth/refresh endpoint...");
 
+        // Refresh token is in HTTP-only cookie, automatically sent with credentials: true
         const response = await api.post(
           `/api/auth/refresh`,
-          { userId, refreshToken }
+          { userId }
         );
 
         console.log("✅ Refresh successful!", response.status);

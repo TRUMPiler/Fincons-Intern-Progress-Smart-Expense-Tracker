@@ -15,8 +15,17 @@ class UserController {
         const accessToken = Token.createAccessToken(UserLogin._id, UserLogin.email, UserLogin.isVerified, req.ip);
         const refreshToken = Token.createRefreshToken(UserLogin._id);
         
-        // Return refresh token in response body for localStorage storage
-        res.status(200).json(Response.success({ user: { _id: UserLogin._id, email: UserLogin.email, name: UserLogin.name }, accessToken, refreshToken }, "User Login Success", 200));
+        // Set refresh token as HTTP-only cookie (secure, same-domain only)
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            path: '/'
+        });
+        
+        // Return only access token and user info (not refresh token)
+        res.status(200).json(Response.success({ user: { _id: UserLogin._id, email: UserLogin.email, name: UserLogin.name }, accessToken }, "User Login Success", 200));
     }
 
     async Register(req, res, next) {

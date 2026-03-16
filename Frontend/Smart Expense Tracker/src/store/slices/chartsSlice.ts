@@ -1,16 +1,28 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import api from '../../lib/axiosInstance'
+import { createContext } from 'react';
 
 export type SpendingCategory = { total: number; category: string }
 export type MonthTrend = { totalSpent: number; month: number; year: number }
 export type Totals = { income: number; expense: number }
+export type DashboardProps={month:number,year:number};
 export type Alert = { _id: string, message: string, type: "budget_exceeded" | "overspending", isRead: boolean };
 const getCategoryId = (cat: any) => typeof cat === "string" ? cat : cat?._id ?? cat?.id ?? "";
 const getCategoryName = (cat: any) => typeof cat === "object" && cat ? cat.name ?? cat.label : "";
+export interface DashboardContextType extends DashboardProps {
+    setMonth: (m: number) => void;
+    setYear: (y: number) => void;
+}
+export const DashboardContext = createContext<DashboardContextType>({
+    month: 0,
+    year: 0,
+    setMonth: () => {},
+    setYear: () => {}
+});
 
 type BudgetProp = {
     _id: string;
-    categoryId?: string;
+    categoryId?: string; 
     categoryName?: string;
     month: number;
     year: number;
@@ -62,18 +74,19 @@ export const fetchAlerts = createAsyncThunk<Alert[], void, { rejectValue: string
     })
 export const fetchBudgetWiseUsage = createAsyncThunk<
     BudgetProp[],
-    void,
+    DashboardProps | undefined,
     { rejectValue: string }
 >(
     "charts/fetchBudgetWise",
-    async (_, thunkApi) => {
+    async (payload, thunkApi) => {
         try {
             const userid = sessionStorage.getItem("id");
-
+            const month = payload?.month==-1?0:payload?.month;
+            const year = payload?.year==-1?0:payload?.year;
             if (!userid) return thunkApi.rejectWithValue("No user id");
-
+            
             const response = await api.get(
-                `/api/budget/${userid}`
+                `/api/budget/?userId=${userid}&month=${month}&year=${year}`
             );
 
             const fetchedBudgets = response?.data?.data ?? [];
@@ -131,14 +144,17 @@ export const fetchBudgetWiseUsage = createAsyncThunk<
     }
 );
 
-export const fetchCategorySpending = createAsyncThunk<SpendingCategory[], void, { rejectValue: string }>(
+export const fetchCategorySpending = createAsyncThunk<SpendingCategory[], DashboardProps | undefined, { rejectValue: string }>(
     'charts/fetchCategorySpending',
-    async (_, thunkAPI) => {
+    async (payload, thunkAPI) => {
         try {
             const userid = sessionStorage.getItem('id')
             if (!userid) return thunkAPI.rejectWithValue('No user id')
+            const month = payload?.month === -1 ? 0 : payload?.month;
+            const year = payload?.year === -1 ? 0 : payload?.year;
             const res = await api.get(`/api/charts/cspending/${userid}`, {
                 headers: { Accept: 'application/json' },
+                params: { month, year }
             })
             return res.data?.data ?? []
         } catch (err: any) {
@@ -180,19 +196,22 @@ export const fetchPredict = createAsyncThunk<number | null, void, { rejectValue:
     }
 )
 
-export const fetchTotals = createAsyncThunk<Totals, void, { rejectValue: string }>(
+export const fetchTotals = createAsyncThunk<Totals, DashboardProps | undefined, { rejectValue: string }>(
     'charts/fetchTotals',
-    async (_, thunkAPI) => {
+    async (payload, thunkAPI) => {
         try {
             const userid = sessionStorage.getItem('id')
             if (!userid) return thunkAPI.rejectWithValue('No user id')
+            const month = payload?.month === -1 ? 0 : payload?.month;
+            const year = payload?.year === -1 ? 0 : payload?.year;
             const res = await api.get(`/api/charts/${userid}`, {
                 headers: { Accept: 'application/json' },
+                params: { month, year }
             })
-            const payload = res.data?.data ?? res.data
+            const data = res.data?.data ?? res.data
             return {
-                income: payload?.totals?.income ?? 0,
-                expense: payload?.totals?.expense ?? 0,
+                income: data?.totals?.income ?? 0,
+                expense: data?.totals?.expense ?? 0,
             }
         } catch (err: any) {
             return thunkAPI.rejectWithValue(err?.response?.data?.message ?? err.message ?? String(err))

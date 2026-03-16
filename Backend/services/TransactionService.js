@@ -6,16 +6,48 @@ import mailer from "../mailer/Transport.js";
 import LogService from "./LogService.js";
 import { checkOverspending } from "./OverSpending.js";
 class TransactionService {
-    async GetAllTranscations(userid) {
+    async GetTranscationBasedOnDate(userid,month,year) {
         try {
-            const allTranscation = await Transaction.find({ userId: userid, isDelete: false }).populate(
-                "category"
-            );
-            console.log("Transcations Fetched for Userid" + userid);
+            if(!user.findById(userid)) throw new Error("User Not Found",{statusCode:404});
+            const monthNum = Number(month);
+            const yearNum = Number(year);
+            console.log('Service - monthNum:', monthNum, 'yearNum:', yearNum);
+            
+            let monthIndex;
+            if (Number.isFinite(monthNum) && monthNum >= 1 && monthNum <= 12) {
+                monthIndex = monthNum - 1;
+            } else {
+                monthIndex = new Date().getMonth();
+            }
+
+            const yearFinal = Number.isFinite(yearNum) && yearNum > 0 ? yearNum : new Date().getFullYear();
+            console.log("Month Index:"+monthIndex);
+            const startDate = new Date(yearFinal, monthIndex, 1, 0, 0, 0, 0);
+            const endDate = new Date(yearFinal, monthIndex+1, 0, 23, 59, 59, 999);
+            console.log("Hello: GG:"+startDate,endDate);
+            const allTranscation = await Transaction.find({
+                userId: userid,
+                isDelete: false,
+                date: { $gte: startDate, $lte: endDate }
+            }).populate("category");
+
+            console.log(`Transcations fetched for Userid ${userid} from ${startDate.toISOString()} to ${endDate.toISOString()}`);
             return allTranscation;
         }
         catch (err) {
-            throw new Error(err);
+            throw err;
+        }
+    }
+    async GetTranscationAll(userId)
+    {
+        try{
+         const allTranscation = await Transaction.find({
+                userId: userId,
+            }).populate("category");
+            return allTranscation;
+        }catch(error)
+        {
+            throw error;
         }
     }
     async CreateTranscation(transaction, userId) {

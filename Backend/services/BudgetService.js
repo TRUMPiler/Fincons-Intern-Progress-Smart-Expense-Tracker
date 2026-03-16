@@ -156,7 +156,6 @@ class BudgetService {
             const budget = await Budget.findById(budgetId);
             const deleted = await Budget.findByIdAndDelete(budgetId);
 
-            // log budget deletion
             try {
                 const action = `User ${budget?.userId} deleted budget ${budget?._id} for category ${budget?.categoryId}`;
                 await LogService.CreateLog(budget?.userId, action, {
@@ -180,10 +179,17 @@ class BudgetService {
     async GetBudgetUsage(userId, categoryId, month, year) {
         try {
             console.log(userId,categoryId,month,year);
+            if(year==-1){
+                year=new Date().getFullYear();
+            }
+            if(month==-1)
+            {
+                year=new Date().getMonth();
+            }
             const startDate = new Date(year, month - 2, 1);
-            
+        
             const endDate = new Date(year, month-1, 30);
-            console.log(startDate+""+endDate);
+           
             const expenses = await Transaction.aggregate([
                 {
                     $match: {

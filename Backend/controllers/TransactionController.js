@@ -12,16 +12,33 @@ class TransactionController {
       next(error);
     }
   }
-  async GetAllTranscations(req, res, next) {
+  async GetBasedOnDate(req, res, next) {
     try {
       const userId = req.params.userId;
-      const all = await TransactionService.GetAllTranscations(userId);
+      let month = req.query.month;
+      let year = req.query.year;
+      
+      // -1 or undefined means use current month/year
+      if (month == -1 || month === undefined) month = new Date().getMonth() + 1;
+      if (year == -1 || year === undefined) year = new Date().getFullYear();
+      console.log('GetAllTranscations - month:', month, 'year:', year);
+      const all = await TransactionService.GetTranscationBasedOnDate(userId, month, year);
       res.json(Response.success(all, "Transactions fetched", 200));
     } catch (error) {
       next(error);
     }
   }
-
+  async GetAllTranscation(req,res,next)
+  {
+    try{
+      const userId=req.params.userId;
+      const data=await TransactionService.GetTranscationAll(userId);
+      res.status(200).json(Response.success(data,"Sending all transcations",200));
+    }catch(error)
+    {
+      next(error);
+    }
+  }
   async DeleteTranscation(req, res, next) {
     try {
       const id = req.params.id;

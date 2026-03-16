@@ -5,7 +5,9 @@ class ChartController {
     async getIncomeExpense(req, res, next) {
         try {
             const userId = req.params.userId;
-            const result = await ChartService.IncomeExpense(userId);
+            const month = req.query.month == 0 ? (new Date().getMonth() + 1) : req.query.month;
+            const year = req.query.year == 0 ? new Date().getFullYear() : req.query.year;
+            const result = await ChartService.IncomeExpense(userId, month, year);
 
             return res.status(200).json(Response.success(result, "Transactions aggregated", 200));
         } catch (error) {
@@ -27,7 +29,9 @@ class ChartController {
     async CategoryWiseSpending(req,res,next)
     {
         try{
-            const data=await ChartService.CategorywiseSpendingChart(req.params.userId);
+            const month = req.query.month == 0 ? (new Date().getMonth() + 1) : req.query.month;
+            const year = req.query.year == 0 ? new Date().getFullYear() : req.query.year;
+            const data=await ChartService.CategorywiseSpendingChart(req.params.userId, month, year);
             res.status(200).json(Response.success(data,"Spending Sent",200));
         }catch(error)
         {
@@ -37,7 +41,9 @@ class ChartController {
     async MonthlyBudget(req,res,next)
     {   
         try{
-            const data=await ChartService.MonthlyBudget(req.params.userId);
+            const month = req.query.month == 0 ? (new Date().getMonth() + 1) : req.query.month;
+            const year = req.query.year == 0 ? new Date().getFullYear() : req.query.year;
+            const data=await ChartService.MonthlyBudget(req.params.userId, month, year);
              res.status(200).json(Response.success(data,"Spending Sent",200));
         }catch(error)
         {

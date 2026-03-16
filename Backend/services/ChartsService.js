@@ -45,13 +45,16 @@ class ChartService {
         }
     }
 
-    async IncomeExpense(userId) {
+    async IncomeExpense(userId,month,year) {
         try {
-            this.CategorywiseSpendingChart(userId);
             if (!userId) return { totals: { income: 0, expense: 0 }, byType: [] };
-            const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
-            const endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 30);
+            
+            // Fallback: Convert 0/-1 to current month/year (controller should handle this, but defensive)
+            let monthNum = (month == 0 || month == -1 || month === undefined) ? new Date().getMonth() + 1 : month;
+            let yearNum = (year == 0 || year == -1 || year === undefined) ? new Date().getFullYear() : year;
+            
+            const startDate = new Date(yearNum, monthNum - 1, 1);
+            const endDate = new Date(yearNum, monthNum, 0);
             const pipeline = [
                 {
                     $match: {
@@ -82,10 +85,13 @@ class ChartService {
             throw error;
         }
     }
-    async CategorywiseSpendingChart(userId) {
-        const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
-        const endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 30);
+    async CategorywiseSpendingChart(userId,month,year) {
+        // Fallback: Convert 0/-1 to current month/year (controller should handle this, but defensive)
+        let monthNum = (month == 0 || month == -1 || month === undefined) ? new Date().getMonth() + 1 : month;
+        let yearNum = (year == 0 || year == -1 || year === undefined) ? new Date().getFullYear() : year;
+        
+        const startDate = new Date(yearNum, monthNum - 1, 1);
+        const endDate = new Date(yearNum, monthNum, 0);
         const pipeline = [
             {
                 $match: {
@@ -123,10 +129,14 @@ class ChartService {
         const row = await Transaction.aggregate(pipeline);
         return row;
     }
-    async MonthlyBudget(userId) {
-        const startDate = new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1);
-
-        const endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 30);
+    async MonthlyBudget(userId,month,year) {
+        // Fallback: Convert 0/-1 to current month/year (controller should handle this, but defensive)
+        let monthNum = (month == 0 || month == -1 || month === undefined) ? new Date().getMonth() + 1 : month;
+        let yearNum = (year == 0 || year == -1 || year === undefined) ? new Date().getFullYear() : year;
+        
+        // For monthly trends, show last 3 months
+        const startDate = new Date(yearNum, monthNum - 3, 1);
+        const endDate = new Date(yearNum, monthNum, 0);
         const pipeline = await Transaction.aggregate([
             {
 

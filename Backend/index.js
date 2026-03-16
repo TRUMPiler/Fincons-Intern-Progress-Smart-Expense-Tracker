@@ -19,17 +19,13 @@ import { seedTransactions } from "./SeederJunction.js";
 const app = express();
 const Port = process.env.PORT || 3000;
 const db = new DBconfig();
-
 app.use(express.json());
-
 app.use(cors({
-    origin:'https://smart-expense-tracker-xi-seven.vercel.app',
+    origin:'http://localhost:5173',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-
-
 app.use(cookieParser());
 app.use("/api/auth",authRoutes);
 app.use("/api/cronJob",CronJobRouter);

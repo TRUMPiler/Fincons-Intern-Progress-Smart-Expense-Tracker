@@ -1,6 +1,7 @@
 import { Card } from "primereact/card"
 import type { TranscationType } from "../pages/Dashboard";
-import { useMemo, type Dispatch, type SetStateAction } from "react";
+import {useContext, useMemo, type Dispatch, type SetStateAction } from "react";
+import { DashboardContext } from "../store/slices/chartsSlice";
 interface SummaryCardProp{
     transcations:TranscationType[];
     setTranscation:Dispatch<SetStateAction<TranscationType[]>>;
@@ -10,16 +11,16 @@ interface SummaryCardProp{
 }
 
 const SummaryCard = ({transcations,loading,predictExpense}:SummaryCardProp) => {
+     const useDashboard=useContext(DashboardContext);
         const predictNumber = (() => {
+                // const now = new Date();
+        // const currentMonth = useDashboard.month==0?now.getMonth():useDashboard.month;
+        // const currentYear = useDashboard.year==0? now.getFullYear():useDashboard.year;
         if (typeof predictExpense === "number") return predictExpense;
         const n = Number(predictExpense);
         return isNaN(n) ? null : n;
     })();
     const totals = useMemo(() => {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-
         return transcations.reduce(
             (acc, t) => {
                 const amt = Number(t.amount ?? 0);
@@ -27,7 +28,11 @@ const SummaryCard = ({transcations,loading,predictExpense}:SummaryCardProp) => {
                 const d = new Date(t.date);
                 if (isNaN(d.getTime())) return acc;
 
-                if (d.getMonth() !== currentMonth || d.getFullYear() !== currentYear) return acc;
+                // If month OR year is -1, use current month
+                const selectedMonth = (useDashboard.month === -1 || useDashboard.month <= 0) ? new Date().getMonth() : useDashboard.month - 1;
+                const selectedYear = (useDashboard.year === -1 || useDashboard.year <= 0) ? new Date().getFullYear() : useDashboard.year;
+                
+                if (d.getMonth() !== selectedMonth || d.getFullYear() !== selectedYear) return acc;
                 
                 if (t.type === "income") acc.income += amt;
                 else if (t.type === "expense") acc.expense += amt;
@@ -35,7 +40,7 @@ const SummaryCard = ({transcations,loading,predictExpense}:SummaryCardProp) => {
             },
             { income: 0, expense: 0 }
         );
-    }, [transcations]);
+    }, [transcations, useDashboard.month, useDashboard.year]);
 
     const balance = totals.income - totals.expense;
         const formatCurrency = (value?: number | null) =>
@@ -79,8 +84,14 @@ const SummaryCard = ({transcations,loading,predictExpense}:SummaryCardProp) => {
                     <div>
                         <p className="text-xs text-gray-500 dark:text-white">Predicted (this month)</p>
                         <p className="text-xl font-semibold text-amber-700 dark:text-amber-400">
-                            {loading ? <span className="inline-block h-5 w-20 bg-gray-200 rounded animate-pulse" /> : predictNumber != null ? formatCurrency(predictNumber) : "—"}
-                        </p>
+                            {(useDashboard.month !== -1 && useDashboard.month > 0 && useDashboard.month !== (new Date().getMonth() + 1))?(
+                            <>
+                             {loading ? <span className="inline-block h-5 w-20 bg-gray-200 rounded animate-pulse" /> : totals.expense != null ? formatCurrency(totals.expense) : "—"}
+                            </> ):(
+                                <>
+                               {loading ? <span className="inline-block h-5 w-20 bg-gray-200 rounded animate-pulse" /> : predictNumber != null ? formatCurrency(predictNumber) : "—"}
+                           </> )} 
+                            </p>
                     </div>
                 </div>
             </Card>

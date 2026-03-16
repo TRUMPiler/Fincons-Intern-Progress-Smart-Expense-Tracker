@@ -21,6 +21,8 @@ type BudgetProp = {
   remaining?: number;
 };
 type CategoryOption = { label: string; value: string; };
+type MonthOptions = { label: string; value: number; };
+
 type month={month:number,year:number};
 
 const Budget: FC = () => {
@@ -29,6 +31,7 @@ const Budget: FC = () => {
     const [filterDates,setFilterDates]=useState<month[]>([]);
    const Months: string[] = ["January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const [filterMonth,setFilterMonth]=useState<number>(0)
+    const [monthOption,setMonthOptions]=useState<MonthOptions[]>([]);
     const [filterYear,setFilterYear]=useState<number>(0)
   const toast = useRef<Toast | null>(null);
   const [budgets, setBudgets] = useState<BudgetProp[]>([]);
@@ -37,7 +40,7 @@ const Budget: FC = () => {
   const [budgetCategoryOptions, setBudgetCategoryOptions] = useState<CategoryOption[]>([]);
   const [typedCategory, setTypedCategory] = useState('');
   const[budgetId,setBudgetId]=useState<string>('');
-
+  
   const getCategoryId = (cat: any) => typeof cat === "string" ? cat : cat?._id ?? cat?.id ?? "";
   const getCategoryName = (cat: any) => typeof cat === "object" && cat ? cat.name ?? cat.label : "";
   
@@ -173,7 +176,14 @@ const Budget: FC = () => {
     });
   }
 
-
+  useEffect(()=>{
+    const uniqueMonths = new Set(filterDates.map(d => d.month));
+    const monthOptions = Array.from(uniqueMonths).map(month => ({
+      label: Months[month - 1],
+      value: month
+    }));
+    setMonthOptions(monthOptions);
+  },[filterDates])
   const createCategory = async (name: string) => {
     try {
       const { data } = await api.post(`/api/category`, 
@@ -321,7 +331,7 @@ const Budget: FC = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Manage and track your spending limits</p>
           </div>
           <div className="flex gap-2 ">
-               <Dropdown options={filterDates.map(e=>e.month)} value={filterMonth} onChange={(e)=>{setFilterMonth(e.target.value)}} placeholder="Select a Month to fiter Requests" className="bg-white"/>
+               <Dropdown options={Array.from(new Set(monthOption.map(e=>e)))} optionLabel="label" optionValue="value"  value={filterMonth} onChange={(e)=>{setFilterMonth(e.target.value)}} placeholder="Select a Month to fiter Requests" className="bg-white"/>
                 <Dropdown options={Array.from(new Set(filterDates.map(e=>e.year)))} value={filterYear} onChange={(e)=>{setFilterYear(e.target.value)}} placeholder="Select a Year to fiter Requests" className="bg-white"/>
           </div>
           <button 

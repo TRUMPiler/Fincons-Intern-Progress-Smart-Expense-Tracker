@@ -318,7 +318,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
                         <span className={row.type === "income" ? "text-green-600" : "text-red-600"}>{row.type?.toUpperCase()}</span>
                     )}
                 />
-                <Column field="date" header="Date" editor={dateEditor} sortable body={(row: TranscationType) => (row.date ? new Date(row.date).toLocaleString() : "")} />
+                <Column field="date" header="Date" editor={dateEditor} sortable body={(row: TranscationType) => (row.date ? new Date(row.date).toDateString(): "")} />
                 <Column rowEditor header="Edit" style={{ width: '8rem' }} />
                 <Column
                     header="Actions"

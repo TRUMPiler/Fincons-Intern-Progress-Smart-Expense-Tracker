@@ -1,15 +1,16 @@
-import { useEffect,  useRef, useState, type FC, type Ref } from "react";
+import { useContext, useEffect,  useRef, useState, type FC, type Ref } from "react";
 import Transcation from "../components/Transactions";
 import { Card } from "primereact/card";
 
 import api from "../lib/axiosInstance";
 import AlertGif from "../assets/downloadAlert.gif";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { fetchAlerts, fetchBudgetWiseUsage, fetchCategorySpending, fetchMonthlyTrend, fetchPredict, fetchTotals, type Alert } from "../store/slices/chartsSlice";
+import { DashboardContext, fetchAlerts, fetchBudgetWiseUsage, fetchCategorySpending, fetchMonthlyTrend, fetchPredict, fetchTotals, type Alert } from "../store/slices/chartsSlice";
 
 import { Toast } from "primereact/toast";
 import { confirmDialog, ConfirmDialog } from "primereact/confirmdialog";
 import { Button } from "primereact/button";
+import { Dropdown } from 'primereact/dropdown';
 import SummaryCard from "../components/SummaryCard";
 import IncomeExpense from "../components/IncomeExpense";
 import CategorySpending from "../components/CategorySpending";
@@ -64,6 +65,11 @@ const DashboardL: FC = () => {
     const [chartBarOptions, setChartBarOptions] = useState({});
     const [chartMonthlyOptions, setChartMonthlyOptions] = useState({});
     const [alerts,setAlerts]=useState<Alert[]>([]);
+    const useDashboard=useContext(DashboardContext);
+    const monthOptions = Months.map((m, i) => ({ label: m, value: i + 1 }));
+    const currentYear = new Date().getFullYear();
+    const yearOptions = Array.from({ length: 5 }).map((_, i) => ({ label: String(currentYear - i), value: currentYear - i }));
+    
     const [dashboardView,setDashboardView]=useState<"Overview"|"Budget Meters">("Overview");
     const options=["Overview","Budget Meters"];
     const [currentAlertIndex, setCurrentAlertIndex] = useState<number | null>(null);
@@ -71,6 +77,7 @@ const DashboardL: FC = () => {
     let acceptRef=useRef<string>('');
     const charts = useAppSelector((s) => s.charts);
     const currentMonth = new Date().toLocaleString(undefined, { month: "long", year: "numeric" });
+    // const displayedMonth = (useDashboard.month && useDashboard.year) ? `${Months[useDashboard.month - 1]} ${useDashboard.year}` : currentMonth;
     const toast=useRef<Toast|null>(null);
     const recentTransactions = transcations.slice(-5).reverse();
     const accepted = async (alertid:string) => {
@@ -106,7 +113,7 @@ const DashboardL: FC = () => {
               message:[messages],
             header:header.toUpperCase(),
             position,
-           // we use custom content buttons, so accept/reject callbacks here are optional
+        
             accept:()=>accepted(alertid),
             reject
         });
@@ -120,7 +127,7 @@ const DashboardL: FC = () => {
         }
 
         api
-            .get(`/api/transcation/${userId}`, {
+            .get(`/api/transcation/${userId}?month=${useDashboard.month}&year=${useDashboard.year}`, {
                 headers: { Accept: "application/json" },
             })
             .then((response: any) => {
@@ -140,7 +147,8 @@ const DashboardL: FC = () => {
                 setCategoryOptions(opts);
             })
             .catch((err: any) => console.error("Category fetch failed", err));
-    }, []);
+            console.log(useDashboard.month);
+    }, [,useDashboard.month,useDashboard.year]);
 
     useEffect(() => {
         const userid = sessionStorage.getItem('id')
@@ -150,12 +158,12 @@ const DashboardL: FC = () => {
         }
 
         dispatch(fetchAlerts())
-        dispatch(fetchBudgetWiseUsage())
+        dispatch(fetchBudgetWiseUsage({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchPredict())
         dispatch(fetchMonthlyTrend())
-        dispatch(fetchCategorySpending())
-        dispatch(fetchTotals())
-    }, [transcations, dispatch])
+        dispatch(fetchCategorySpending({ month: useDashboard.month, year: useDashboard.year }))
+        dispatch(fetchTotals({ month: useDashboard.month, year: useDashboard.year }))
+    }, [transcations, dispatch, useDashboard.month, useDashboard.year])
 
 
     useEffect(() => {
@@ -291,6 +299,10 @@ const DashboardL: FC = () => {
             <div className="w-full max-w-7xl  mt-3">
                 <div className="flex items-center justify-between mb-6">
                 <SelectButton options={options} value={dashboardView} onChange={(e:any)=>setDashboardView(e.value)} />
+                <div className="flex gap-2 ml-4">
+                    <Dropdown options={monthOptions} optionLabel="label" optionValue="value" value={useDashboard.month} onChange={(e:any)=>useDashboard.setMonth(e.value)} placeholder="Month" className="bg-white" />
+                    <Dropdown options={yearOptions} optionLabel="label" optionValue="value" value={useDashboard.year} onChange={(e:any)=>useDashboard.setYear(e.value)} placeholder="Year" className="bg-white" />
+                </div>
             <ConfirmDialog
                 group="headless"
                 content={({ headerRef, contentRef, footerRef, hide, message }) => (

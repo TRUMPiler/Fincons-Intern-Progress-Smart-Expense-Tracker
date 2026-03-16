@@ -16,17 +16,22 @@ import DashboardL from './pages/Dashboard'
 // import Dashboard1L from './pages/Dashboard copy'
 import { PrimeReactProvider } from 'primereact/api'
 import Chat from './pages/Chat'
+import { DashboardContext } from './store/slices/chartsSlice'
 
 export const SideBarContext = createContext<any>(null);
 
 function App() {
   const [open, SetOpen] = useState<boolean>(false);
   const value: SideBarContextProps = { open, setOpen: SetOpen };
+  // const now = new Date();
+  const [dashMonth, setDashMonth] = useState<number>(-1); // 1-based month
+  const [dashYear, setDashYear] = useState<number>(-1);
 
   return (
     <>
     <PrimeReactProvider>
       <SideBarContext.Provider value={value}>
+        <DashboardContext.Provider value={{month: dashMonth, year: dashYear, setMonth: setDashMonth, setYear: setDashYear}}>
         <SidebarProvider open={value.open} onOpenChange={value.setOpen}>
           <SidebarExample />
           {!value.open && (
@@ -58,7 +63,10 @@ function App() {
             </Suspense>
           </main>
         </SidebarProvider>
+      </DashboardContext.Provider>
+
       </SideBarContext.Provider>
+      
       </PrimeReactProvider>
     </>
   )

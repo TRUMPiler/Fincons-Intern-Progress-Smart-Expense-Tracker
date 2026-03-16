@@ -212,7 +212,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
     }
   };
  const formatCurrency = (value:number) => {
-        return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+        return value.toLocaleString('en-US', { style: 'currency', currency: 'INR' });
     };
   const handleCategoryChange = (e: any) => {
     const val = e.value;

@@ -49,7 +49,7 @@ const calculateGridValues=(charts:any):number=>
                                 ) : (
                                     <div className="text-gray-500 dark:text-white">No chart data</div>
                                 )}
-                                <div className="flex flex-row  lg:flex-col gap-2">
+                                <div className="flex flex-row  gap-2">
                                     <p className="text-black dark:text-white">Limit:{data.limit}</p>
                                     <p className="text-black dark:text-white">Remaining:{data.remaining}</p>
                                 </div>

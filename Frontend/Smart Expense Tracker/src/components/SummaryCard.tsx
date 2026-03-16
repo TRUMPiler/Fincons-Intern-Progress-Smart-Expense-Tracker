@@ -39,7 +39,7 @@ const SummaryCard = ({transcations,loading,predictExpense}:SummaryCardProp) => {
 
     const balance = totals.income - totals.expense;
         const formatCurrency = (value?: number | null) =>
-        value == null ? "-" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+        value == null ? "-" : new Intl.NumberFormat("en-US", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
     return (
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4 min-w-[20vh] lg:min-w-[60vh]">

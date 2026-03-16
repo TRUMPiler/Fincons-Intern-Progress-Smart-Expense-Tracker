@@ -368,7 +368,7 @@ const DashboardL: FC = () => {
                                         <div className="text-xs text-gray-500">{t.date ? new Date(t.date).toLocaleDateString() : ''}</div>
                                     </div>
                                     <div className={t.type === 'expense' ? 'text-red-500 font-semibold' : 'text-green-500 font-semibold'}>
-                                        {t.amount ? t.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : ''}
+                                        {t.amount ? t.amount.toLocaleString('en-US', { style: 'currency', currency: 'INR' }) : ''}
                                     </div>
                                 </div>
                             ))}

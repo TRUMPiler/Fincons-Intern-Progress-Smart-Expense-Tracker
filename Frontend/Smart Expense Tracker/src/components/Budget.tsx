@@ -352,11 +352,11 @@ const Budget: FC = () => {
                       <div className="flex justify-between items-end">
                         <div>
                           <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Spent</p>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white">${spent.toFixed(2)}</p>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{spent.toFixed(2)}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Limit</p>
-                          <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">${budget.limit.toFixed(2)}</p>
+                          <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">₹{budget.limit.toFixed(2)}</p>
                         </div>
                       </div>
 
@@ -372,7 +372,7 @@ const Budget: FC = () => {
                           <span className={`text-sm font-medium ${
                             (budget.remaining ?? 0) <= 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
                           }`}>
-                            Remaining: ${(budget.remaining ?? budget.limit).toFixed(2)}
+                            Remaining: ₹{(budget.remaining ?? budget.limit).toFixed(2)}
                           </span>
                         </div>
                       </div>

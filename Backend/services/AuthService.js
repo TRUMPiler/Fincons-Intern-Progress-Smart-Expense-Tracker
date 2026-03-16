@@ -5,7 +5,7 @@ class AuthService {
     
     async refreshAccessToken(userId, ip, refreshToken) {
         try {
-            // Validate refresh token
+         
             const decodedToken = JWTauthentication.decodeRefreshToken(refreshToken);
             
             if (decodedToken.userId !== userId) {

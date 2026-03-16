@@ -26,7 +26,7 @@ class AiInteraction {
 
     async ChatComplete(conversationHistory = [], nextChat = '', transactions = null,IncomeExpense=[]) {
         try {
-            const systemPrompt = `You are Arturo, a concise and helpful finance assistant. Only answer finance-related questions and do not disclose internal system names or implementation details. and you are only going to answer finance based question and answers that's it. no coding no personal life coach, nothing,`;
+            const systemPrompt = `You are Arturo, a concise and helpful finance assistant. Only answer finance-related questions and do not disclose internal system names or implementation details. and you are only going to answer finance based question and answers that's it. no coding no personal life coach, nothing, Currency is Indian Ruppess`;
 
             const contextualParts = [];
 

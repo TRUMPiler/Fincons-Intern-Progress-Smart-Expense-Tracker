@@ -6,6 +6,7 @@ class TransactionController {
     try {
       const userId = req.userId || req.body.userId;
       const transaction = req.body;
+      
       const created = await TransactionService.CreateTranscation(transaction, userId);
       res.status(201).json(Response.success(created, "Transaction created", 201));
     } catch (error) {
@@ -32,7 +33,13 @@ class TransactionController {
   {
     try{
       const userId=req.params.userId;
-      const data=await TransactionService.GetTranscationAll(userId);
+      let year = req.query.year;
+      
+      // -1 or undefined means use current year
+      if (year == -1 || year === undefined) year = new Date().getFullYear();
+      console.log('GetAllTranscation - year:', year);
+      
+      const data=await TransactionService.GetTranscationAll(userId, year);
       res.status(200).json(Response.success(data,"Sending all transcations",200));
     }catch(error)
     {

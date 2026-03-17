@@ -50,6 +50,41 @@ class ChartService {
         }
     }
 
+    async getAvailableYears(userId) {
+        try {
+            const userObjectId = new mongoose.Types.ObjectId(userId);
+            const years = await Transaction.aggregate([
+                {
+                    $match: {
+                        userId: userObjectId,
+                        isDelete: false
+                    }
+                },
+                {
+                    $group: {
+                        _id: { $year: "$date" }
+                    }
+                },
+                {
+                    $sort: {
+                        "_id": -1
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        year: "$_id"
+                    }
+                }
+            ]);
+
+            console.log("Available years:", years);
+            return years;
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+
     async PredictedExpense(userId) {
         const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
@@ -347,7 +382,9 @@ class ChartService {
         // Fallback: Convert 0/-1 to current month/year (controller should handle this, but defensive)
         let monthNum = (month == 0 || month == -1 || month === undefined) ? new Date().getMonth() + 1 : month;
         let yearNum = (year == 0 || year == -1 || year === undefined) ? new Date().getFullYear() : year;
-        
+        console.log(month);
+
+        console.log(year);
         // For monthly trends, show last 3 months
         const startDate = new Date(yearNum, monthNum - 3, 1);
         const endDate = new Date(yearNum, monthNum, 0);

@@ -6,13 +6,13 @@ import mailer from "../mailer/Transport.js";
 import LogService from "./LogService.js";
 import { checkOverspending } from "./OverSpending.js";
 class TransactionService {
-    async GetTranscationBasedOnDate(userid,month,year) {
+    async GetTranscationBasedOnDate(userid, month, year) {
         try {
-            if(!user.findById(userid)) throw new Error("User Not Found",{statusCode:404});
+            if (!user.findById(userid)) throw new Error("User Not Found", { statusCode: 404 });
             const monthNum = Number(month);
             const yearNum = Number(year);
             console.log('Service - monthNum:', monthNum, 'yearNum:', yearNum);
-            
+
             let monthIndex;
             if (Number.isFinite(monthNum) && monthNum >= 1 && monthNum <= 12) {
                 monthIndex = monthNum - 1;
@@ -21,10 +21,10 @@ class TransactionService {
             }
 
             const yearFinal = Number.isFinite(yearNum) && yearNum > 0 ? yearNum : new Date().getFullYear();
-            console.log("Month Index:"+monthIndex);
+            console.log("Month Index:" + monthIndex);
             const startDate = new Date(yearFinal, monthIndex, 1, 0, 0, 0, 0);
-            const endDate = new Date(yearFinal, monthIndex+1, 0, 23, 59, 59, 999);
-            console.log("Hello: GG:"+startDate,endDate);
+            const endDate = new Date(yearFinal, monthIndex + 1, 0, 23, 59, 59, 999);
+            console.log("Hello: GG:" + startDate, endDate);
             const allTranscation = await Transaction.find({
                 userId: userid,
                 isDelete: false,
@@ -38,16 +38,23 @@ class TransactionService {
             throw err;
         }
     }
-    async GetTranscationAll(userId)
-    {
-        try{
-         const allTranscation = await Transaction.find({
+    async GetTranscationAll(userId, year) {
+        try {
+            const yearNum = Number(year);
+            const yearFinal = Number.isFinite(yearNum) && yearNum > 0 ? yearNum : new Date().getFullYear();
+            
+            const startDate = new Date(yearFinal, 0, 1, 0, 0, 0, 0);
+            const endDate = new Date(yearFinal, 11, 31, 23, 59, 59, 999);
+            
+            const allTranscation = await Transaction.find({
                 userId: userId,
-                isDelete:false
+                isDelete: false,
+                date: { $gte: startDate, $lte: endDate }
             }).populate("category");
+            
+            console.log(`Transcations fetched for Userid ${userId} for year ${yearFinal}`);
             return allTranscation;
-        }catch(error)
-        {
+        } catch (error) {
             throw error;
         }
     }
@@ -327,19 +334,19 @@ class TransactionService {
                     category: categoryName,
                 });
 
-         
-                  
-            const category = await Category.findById(updatedTransaction.category);
 
-            if (!category) {
-                throw new Error("Category not found");
-            }
-            
-            if (!category.isDefault && category.userId?.toString() !== userId) {
-                throw new Error("Invalid category selected");
-            }
-                await checkOverspending(userId, updated.category);
-              
+
+                const category = await Category.findById(updatedTransaction.category);
+
+                if (!category) {
+                    throw new Error("Category not found");
+                }
+
+                if (!category.isDefault && category.userId?.toString() !== userId) {
+                    throw new Error("Invalid category selected");
+                }
+                await checkOverspending(userId, updated.category, updated._id);
+
             } catch (logErr) {
                 console.error("Failed to create transaction log", logErr);
             }
@@ -377,15 +384,17 @@ class TransactionService {
 
             if ((spent / limit) * 100 > 80) {
                 const User = await user.findById(userId);
+
                 if (limit === 0) return;
-                if (User?.email) {
-                    (async () => {
-                        const info = await mailer.emails.send({
-                            from: '"MoneyMint" <fincons@moneymint.tech>',
-                            to: User.email,
-                            subject: "⚠️ Budget Alert from MoneyMint",
-                            text: `You have used more than 80% of your budget on ${Category.name}.`,
-                            html: `
+                if (updated.date.getMonth() != new Date().getMonth) {
+                    if (User?.email) {
+                        (async () => {
+                            const info = await mailer.emails.send({
+                                from: '"MoneyMint" <fincons@moneymint.tech>',
+                                to: User.email,
+                                subject: "⚠️ Budget Alert from MoneyMint",
+                                text: `You have used more than 100% of your budget on ${Category.name}.`,
+                                html: `
                 <div style="font-family: Arial, sans-serif; background-color:#f4f4f4; padding:20px;">
                     <div style="max-width:600px; margin:auto; background:white; padding:30px; border-radius:10px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
                         
@@ -396,7 +405,7 @@ class TransactionService {
                         </p>
 
                         <p style="font-size:16px; color:#555;">
-                            You have spent more than <b>80% of your monthly budget</b> for ${Category.name}.
+                            You have spent more than <b>100% of your monthly budget</b> for ${Category.name}.
                         </p>
 
                         <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px;">
@@ -418,13 +427,13 @@ class TransactionService {
                     </div>
                 </div>
                 `
-                        });
+                            });
 
-                        console.log("Budget alert email sent:", info.messageId);
-                    })();
+                            console.log("Budget alert email sent:", info.messageId);
+                        })();
+                    }
                 }
             }
-
             return updated;
 
         } catch (err) {

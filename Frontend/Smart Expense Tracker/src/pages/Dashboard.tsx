@@ -1,7 +1,7 @@
 import { useContext, useEffect, useMemo, useRef, useState, type FC, type Ref } from "react";
 import Transcation from "../components/Transactions";
 import { Card } from "primereact/card";
-
+import { ProgressBar } from "primereact/progressbar";
 import api from "../lib/axiosInstance";
 import AlertGif from "../assets/downloadAlert.gif";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -133,8 +133,8 @@ const DashboardL: FC = () => {
     useEffect(() => {
         const userId = sessionStorage.getItem("id");
         if (!userId) {
-            // window.location.href = "/login";
-            // return;
+            window.location.href = "/login";
+            return;
         }
 
         api
@@ -172,7 +172,7 @@ const DashboardL: FC = () => {
         dispatch(fetchAlerts())
         dispatch(fetchBudgetWiseUsage({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchPredict())
-        dispatch(fetchMonthlyTrend())
+        dispatch(fetchMonthlyTrend({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchCategorySpending({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchTotals({ month: useDashboard.month, year: useDashboard.year }))
     }, [transcations, dispatch, useDashboard.month, useDashboard.year])
@@ -344,8 +344,21 @@ const DashboardL: FC = () => {
 
             setIsInitialized(true);
         }
-    }, [charts.availableMonths, isInitialized, useDashboard])
- 
+    }, [charts.availableMonths, isInitialized, useDashboard]);
+
+    useEffect(() => {
+        // Check if all required data has been fetched
+        const allDataLoaded = 
+            charts.financialHealth && 
+            charts.categorySpending &&
+            charts.totals &&
+            charts.monthlyTrend &&
+            charts.Alerts !== undefined;
+        
+        if (allDataLoaded) {
+            setLoading(false);
+        }
+    }, [charts.financialHealth, charts.categorySpending, charts.totals, charts.monthlyTrend, charts.Alerts]);
       const DisplayDate = useMemo(() => {
             let ShowDate = currentMonth;
             if(useDashboard.month !== -1)
@@ -370,13 +383,18 @@ const DashboardL: FC = () => {
        
         <div className="flex flex-col items-center w-full min-h-screen gap-6 py-8 px-4 bg-gray-200  dark:bg-none dark:bg-black ">
          <Toast ref={toast}/>
-            <div className="w-full max-w-7xl  mt-3">
+            {loading && (
+                <div className="w-full max-w-7xl fixed top-0 left-0 right-0 z-50">
+                    <ProgressBar value={100} showValue={false} style={{ height: '4px' }} className="bg-indigo-500" />
+                </div>
+            )}
+            <div className={`w-full max-w-7xl  mt-3 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
                 
                 <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
                          <div>
                         <h1 className="text-3xl font-extrabold text-gray-900 dark:text-indigo-300">Dashboard</h1>
                         <p className="text-sm text-gray-600 dark:text-gray-300">Overview · {DisplayDate}</p>
-                        {fiananceHealth.label && (
+                        {fiananceHealth.label && (transcations.length > 0 || loading) && (
                             <p className={`text-lg font-semibold ${getHealthColor()}`}>
                                 Financial Health: {fiananceHealth.label} ({fiananceHealth.score}/100)
                             </p>
@@ -384,8 +402,8 @@ const DashboardL: FC = () => {
                     </div>
                 <SelectButton options={options} value={dashboardView} onChange={(e:any)=>setDashboardView(e.value)} />
                 <div className="flex gap-2 ml-4 flex-col  md:flex-row">
-                    <Dropdown options={dynamicMonthOptions} optionLabel="label" optionValue="value" value={useDashboard.month} onChange={(e:any)=>useDashboard.setMonth(e.value)} placeholder="Month" className="bg-white" />
-                    <Dropdown options={dynamicYearOptions} optionLabel="label" optionValue="value" value={useDashboard.year} onChange={(e:any)=>useDashboard.setYear(e.value)} placeholder="Year" className="bg-white" />
+                    <Dropdown disabled={loading} options={dynamicMonthOptions} optionLabel="label" optionValue="value" value={useDashboard.month} onChange={(e:any)=>useDashboard.setMonth(e.value)} placeholder="Month" className="bg-white" />
+                    <Dropdown disabled={loading} options={dynamicYearOptions} optionLabel="label" optionValue="value" value={useDashboard.year} onChange={(e:any)=>useDashboard.setYear(e.value)} placeholder="Year" className="bg-white" />
                 </div>
             <ConfirmDialog
                 group="headless"
@@ -441,7 +459,14 @@ const DashboardL: FC = () => {
             />
                
                 </div>
-            {(dashboardView==="Overview"?(<>
+            {transcations.length === 0 && !loading ? (
+                <div className="w-full flex items-center justify-center py-16">
+                    <Card className="p-8 shadow rounded-lg text-center max-w-md dark:border dark:border-white">
+                        <h3 className="text-xl font-semibold text-gray-700 mb-2 dark:text-white">No Data Available</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">No transactions available for the selected month. Please choose another month or year.</p>
+                    </Card>
+                </div>
+            ) : (dashboardView==="Overview"?(<>
                <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading}  predictExpense={predictExpense} />
 
                 <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions} breakdown={fiananceHealth.breakdown} summary={fiananceHealth.summary}/>

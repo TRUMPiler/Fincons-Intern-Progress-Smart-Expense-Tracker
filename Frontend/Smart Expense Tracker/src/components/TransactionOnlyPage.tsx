@@ -24,6 +24,7 @@ type TranscationType = {
     date?: string;
     isDelete?: boolean;
 };
+
 const Transcation:FC=()=>
 {
        const [addTranscationVisible,setAddTranscationVisible]=useState<boolean>(false);
@@ -34,6 +35,8 @@ const Transcation:FC=()=>
             const [description, setDescription] = useState<string>("");
             const [transactionType, setTransactionType] = useState<"income" | "expense" | "">("");
             const [dateVal, setDateVal] = useState<string>(new Date().toISOString().slice(0,10));
+            const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+            const [yearOptions, setYearOptions] = useState<Array<{ label: string; value: number }>>([]);
         const [categoryOptions, setCategoryOptions] = useState<Array<{ label: string; value: string }>>([]);
         const [transactions,setTranscation]=useState<TranscationType[]>([]);
    const amountEditor = (options: ColumnEditorOptions) => (
@@ -60,17 +63,49 @@ const Transcation:FC=()=>
         return <InputText type="date" value={val} onChange={(e: any) => options.editorCallback!(e.target.value)} className="w-full" />;
     };
     const toast = useRef<Toast | null>(null);
-    useEffect(() => {
     
+    useEffect(() => {
         // const JwtToken = sessionStorage.getItem("jwtToken");
         const userId = sessionStorage.getItem("id");
         if(!userId)
         {
             window.location.href="/login";
         }
+        
+        api.get(`/api/category/?userId=${userId}`)
+        .then((res) => {
+            const cats = res?.data?.data ?? [];
+            const opts = cats.map((c: any) => ({ label: c.name, value: c._id }));
+            setCategoryOptions(opts);
+        })
+        .catch((err) => console.error("Category fetch failed", err));
+
+        api.get(`/api/charts/years/${userId}`)
+        .then((res) => {
+            console.log("Years API response:", res);
+            console.log("Years data:", res?.data);
+            const yearsData = res?.data?.data ?? [];
+            console.log("Years array:", yearsData);
+            const opts = yearsData.map((y: any) => ({ label: y.year.toString(), value: y.year }));
+            console.log("Year options:", opts);
+            setYearOptions(opts);
+            if (opts.length > 0) {
+                setSelectedYear(opts[0].value);
+            }
+        })
+        .catch((err) => {
+            console.error("Years fetch error:", err);
+            setYearOptions([]);
+        });
+    }, []);
+
+    useEffect(() => {
+        const userId = sessionStorage.getItem("id");
+        if(!userId) return;
+        
         api
             .get<TranscationType[]>(
-                `/api/transcation/all/${userId}`,
+                `/api/transcation/all/${userId}?year=${selectedYear}`,
                 {
                     headers: {
                         Accept: "application/json"
@@ -85,16 +120,7 @@ const Transcation:FC=()=>
                 console.log(response);
             })
             .catch((err) => console.error(err));
-
-
-        api.get(`/api/category/?userId=${userId}`)
-        .then((res) => {
-            const cats = res?.data?.data ?? [];
-            const opts = cats.map((c: any) => ({ label: c.name, value: c._id }));
-            setCategoryOptions(opts);
-        })
-        .catch((err) => console.error("Category fetch failed", err));
-    }, []);
+    }, [selectedYear]);
 
     const resetForm = () => {
         setAmount("");
@@ -215,25 +241,40 @@ const Transcation:FC=()=>
             
             {/* Header Section */}
             <div className="mb-8">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex flex-col lg:flex-row items-center justify-between mb-2">
                     <div className="flex items-center gap-3 mt-7 lg:mt-2">
                         <div className="bg-indigo-500 p-3 rounded-lg">
                             <DollarSign className="w-6 h-6 text-white" />
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                            Transactions
-                        </h1>
+                        <div>
+                            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                                Transactions
+                            </h1>
+                        </div>
                     </div>
-                    <button 
-                        onClick={() => setAddTranscationVisible(true)}
-                        className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span className="hidden md:inline">Add Transaction</span>
-                        <span className="md:hidden">Add</span>
-                    </button>
+                    <div className="flex flex-col md:flex-row items-center gap-3">
+                        <div className="flex  flex-col gap-1">
+                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Year</label>
+                            <Dropdown
+                                options={yearOptions}
+                                value={selectedYear}
+                                onChange={(e: any) => setSelectedYear(e.value)}
+                                optionLabel="label"
+                                optionValue="value"
+                                className="w-full"
+                            />
+                        </div>
+                        <button 
+                            onClick={() => setAddTranscationVisible(true)}
+                            className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span className="hidden md:inline">Add Transaction</span>
+                            <span className="md:hidden">Add</span>
+                        </button>
+                    </div>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400">Manage and track all your income and expenses</p>
+                <p className="text-gray-600 dark:text-gray-400">Manage and track all your income and expenses for year {selectedYear}</p>
             </div>
 
             <Dialog 

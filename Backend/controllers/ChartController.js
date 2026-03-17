@@ -72,6 +72,17 @@ class ChartController {
             next(error);
         }
     }
-}
 
+    async getAvailableYears(req,res,next)
+    {
+        try{
+            const userId = req.params.userId;
+            const data = await ChartService.getAvailableYears(userId);
+            return res.status(200).json(Response.success(data,"Available years retrieved",200));
+        }catch(error)
+        {
+            next(error);
+        }
+    }
+}
 export default new ChartController();

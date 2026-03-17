@@ -15,16 +15,16 @@ class UserController {
         const accessToken = Token.createAccessToken(UserLogin._id, UserLogin.email, UserLogin.isVerified, req.ip);
         const refreshToken = Token.createRefreshToken(UserLogin._id);
         
-        // Set refresh token as HTTP-only cookie (secure, same-domain only)
+
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
+            secure: process.env.NODE_ENV === 'production', 
             sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            maxAge: 7 * 24 * 60 * 60 * 1000,
             path: '/'
         });
         
-        // Return only access token and user info (not refresh token)
+
         res.status(200).json(Response.success({ user: { _id: UserLogin._id, email: UserLogin.email, name: UserLogin.name }, accessToken }, "User Login Success", 200));
     }
 
@@ -38,7 +38,7 @@ class UserController {
             (async () => {
                 const info = await mailer.emails.send({
                 // const info=await mailer.sendMail({
-                    from: '"MoneyMint" <naisal036@gmail.com>',
+                    from: '"MoneyMint" <fincons@moneymint.tech>',
                     to: req.body.email,
                     subject: "Welcome to MoneyMint 🎉",
                     text: "Welcome to MoneyMint! Please verify your email.",
@@ -53,7 +53,7 @@ class UserController {
         Please verify your email address to activate your account.
       </p>
 
-      <a href="http://localhost:5173/verify/${UserRegister._id}" 
+      <a href="${process.env.FRONTEND_URL}/verify/${UserRegister._id}" 
          style="
            display:inline-block;
            margin-top:20px;

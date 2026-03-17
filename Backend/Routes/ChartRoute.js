@@ -4,10 +4,11 @@ import ChartController from "../controllers/ChartController.js";
 
 const router = express.Router();
 router.get("/healthUpdate",authHandler,ChartController.FinancialHealthReview);
-router.get("/:userId", authHandler,ChartController.getIncomeExpense);
 router.get("/predict/:userId", authHandler,ChartController.getPredictedExpense);
 router.get("/cspending/:userId",authHandler,ChartController.CategoryWiseSpending);
 router.get("/monthlytrend/:userId",authHandler,ChartController.MonthlyBudget);
 router.get("/months/:userId", authHandler, ChartController.getAvailableMonths);
+router.get("/years/:userId", authHandler, ChartController.getAvailableYears);
+router.get("/:userId", authHandler,ChartController.getIncomeExpense);
 
 export default router;

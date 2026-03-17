@@ -200,13 +200,15 @@ export const fetchCategorySpending = createAsyncThunk<SpendingCategory[], Dashbo
     }
 )
 
-export const fetchMonthlyTrend = createAsyncThunk<MonthTrend[], void, { rejectValue: string }>(
+export const fetchMonthlyTrend = createAsyncThunk<MonthTrend[], DashboardProps|null, { rejectValue: string }>(
     'charts/fetchMonthlyTrend',
-    async (_, thunkAPI) => {
+    async (payload, thunkAPI) => {
         try {
             const userid = sessionStorage.getItem('id')
             if (!userid) return thunkAPI.rejectWithValue('No user id')
-            const res = await api.get(`/api/charts/monthlytrend/${userid}`, {
+                console.log(payload?.month);
+            console.log(payload?.year);
+            const res = await api.get(`/api/charts/monthlytrend/${userid}?month=${payload?.month}&year=${payload?.year}`, {
                 headers: { Accept: 'application/json' },
             })
             return res.data?.data ?? []

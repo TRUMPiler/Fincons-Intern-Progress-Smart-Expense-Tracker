@@ -31,6 +31,22 @@ type TransactionProp={
 }
 const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:TransactionProp) => {
     // const [transcations, setTranscations] = useState<TranscationType[]>([]);
+    const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+    const [yearOptions, setYearOptions] = useState<Array<{ label: string; value: number }>>([]);
+    
+    const toLocalDatetimeInputValue = (date?: string | Date) => {
+        const d = date ? new Date(date) : new Date();
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    const getMaxDatetimeLocal = () => toLocalDatetimeInputValue();
+    const getMinDatetimeLocal = () => {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 2);
+        return toLocalDatetimeInputValue(d);
+    };
+
     const [addTranscationVisible,setAddTranscationVisible]=useState<boolean>(false);
 
         const [typedCategory, setTypedCategory] = useState('');
@@ -38,7 +54,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
         const [selectedCategory, setSelectedCategory] = useState<string>("");
         const [description, setDescription] = useState<string>("");
         const [transactionType, setTransactionType] = useState<"income" | "expense" | "">("");
-        const [dateVal, setDateVal] = useState<string>(new Date().toISOString().slice(0,10));
+        const [dateVal, setDateVal] = useState<string>(getMaxDatetimeLocal());
     const [categoryOptions, setCategoryOptions] = useState<Array<{ label: string; value: string }>>([]);
     const amountEditor = (options: ColumnEditorOptions) => (
         <InputText type="number" value={options.value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => options.editorCallback!(e.target.value)} className="w-full" />
@@ -60,8 +76,8 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
     );
 
     const dateEditor = (options: ColumnEditorOptions) => {
-        const val = options.value ? new Date(options.value).toISOString().slice(0,10) : '';
-        return <InputText type="date" value={val} onChange={(e: any) => options.editorCallback!(e.target.value)} className="w-full" />;
+        const val = options.value ? toLocalDatetimeInputValue(options.value) : '';
+        return <InputText type="datetime-local" value={val} onChange={(e: any) => options.editorCallback!(e.target.value)} min={getMinDatetimeLocal()} max={getMaxDatetimeLocal()} className="w-full" />;
     };
     const toast = useRef<Toast | null>(null);
     useEffect(() => {
@@ -99,6 +115,20 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
             setCategoryOptions(opts);
         })
         .catch((err) => console.error("Category fetch failed", err));
+
+        api.get(`/api/chart/years/${userId}`)
+        .then((res) => {
+            const yearsData = res?.data?.data ?? [];
+            const opts = yearsData.map((y: any) => ({ label: y.year.toString(), value: y.year }));
+            setYearOptions(opts);
+            if (opts.length > 0) {
+                setSelectedYear(opts[0].value);
+            }
+        })
+        .catch((err) => {
+            console.error("Years fetch failed", err);
+            setYearOptions([]);
+        });
     }, []);
 
     const resetForm = () => {
@@ -106,7 +136,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
         setSelectedCategory("");
         setDescription("");
         setTransactionType("");
-        setDateVal(new Date().toISOString().slice(0,10));
+        setDateVal(getMaxDatetimeLocal());
     };
 
     const handleAddSubmit = async () => {
@@ -117,13 +147,24 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
                 return;
             }
             const userId = sessionStorage.getItem("id");
+            // validate date within allowed range (min 2 years ago, max now)
+            const minDate = new Date();
+            minDate.setFullYear(minDate.getFullYear() - 2);
+            const maxDate = new Date();
+            const enteredDate = new Date(dateVal);
+            if (isNaN(enteredDate.getTime()) || enteredDate < minDate || enteredDate > maxDate) {
+                toast.current?.show({ severity: 'error', summary: 'Invalid date', detail: 'Date & Time must be within last 2 years and up to now' });
+                return;
+            }
+
             const payload = {
                 userId,
                 amount: Number(amount),
                 category: selectedCategory,
                 description,
                 type: transactionType,
-                date: dateVal,
+                // convert local datetime-local string to ISO for backend
+                date: enteredDate.toISOString(),
             };
 
             const res = await api.post(`/api/transcation`, payload, {
@@ -170,13 +211,29 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
         if (updated.category && typeof updated.category === 'object') {
             updated.category = updated.category._id ?? updated.category.value ?? '';
         }
-        // normalize date to ISO
-        if (updated.date && typeof updated.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(updated.date)) {
-            updated.date = new Date(updated.date).toISOString();
+        if (updated.date && typeof updated.date === 'string') {
+            if (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/.test(updated.date)) {
+                updated.date = new Date(updated.date).toISOString();
+            } else {
+                const parsed = new Date(updated.date);
+                if (!isNaN(parsed.getTime())) {
+                    updated.date = parsed.toISOString();
+                }
+            }
+
+            // validate updated date within allowed range
+            const minDate = new Date();
+            minDate.setFullYear(minDate.getFullYear() - 2);
+            const maxDate = new Date();
+            const entered = new Date(updated.date);
+            if (isNaN(entered.getTime()) || entered < minDate || entered > maxDate) {
+                toast.current?.show({ severity: 'error', summary: 'Invalid date', detail: 'Date must be within last 2 years and up to now' });
+                return;
+            }
         }
 
         try {
-            // const JwtToken = sessionStorage.getItem('jwtToken');
+           ;
             const userId = sessionStorage.getItem('id');
             await api.put(`/api/transcation/${updated._id}`, { ...updated, userId }, {
                 headers: { Accept: 'application/json' },
@@ -276,10 +333,10 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
                         <Dropdown options={[{label:'Income', value:'income'}, {label:'Expense', value:'expense'}]} value={transactionType} onChange={(e:any)=>setTransactionType(e.value)} optionLabel="label" optionValue="value" placeholder="Select type" className="w-full" />
                     </div>
 
-                    <FloatLabel className="w-full">
-                        <InputText type="date" value={dateVal} onChange={(e:any)=>setDateVal(e.target.value)} className="w-full" />
-                        <label>Date</label>
-                    </FloatLabel>
+                        <FloatLabel className="w-full">
+                            <InputText type="datetime-local" value={dateVal} onChange={(e:any)=>setDateVal(e.target.value)} min={getMinDatetimeLocal()} max={getMaxDatetimeLocal()} className="w-full" />
+                            <label>Date & Time</label>
+                        </FloatLabel>
 
                     <div className="flex justify-end gap-2">
                         <Button label="Cancel" className="p-button-secondary" onClick={()=>{ setAddTranscationVisible(false); resetForm(); }} />
@@ -294,7 +351,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
                 <Column field="amount" header="Amount" editor={amountEditor}  body={priceBodyTemplate}/>
                 <Column
                     field="category"
-                    sortable
+                 
                     header="Category"
                     editor={categoryEditor}
                     body={(row: any) => {
@@ -318,7 +375,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
                         <span className={row.type === "income" ? "text-green-600" : "text-red-600"}>{row.type?.toUpperCase()}</span>
                     )}
                 />
-                <Column field="date" header="Date" editor={dateEditor} sortable body={(row: TranscationType) => (row.date ? new Date(row.date).toDateString(): "")} />
+                <Column field="date" header="Date" editor={dateEditor} sortable body={(row: TranscationType) => (row.date ? new Date(row.date).toLocaleString(): "")} />
                 <Column rowEditor header="Edit" style={{ width: '8rem' }} />
                 <Column
                     header="Actions"

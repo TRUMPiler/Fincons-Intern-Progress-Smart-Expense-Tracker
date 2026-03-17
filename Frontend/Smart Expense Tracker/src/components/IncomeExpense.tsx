@@ -10,7 +10,7 @@ type IncomeExpenseProps={
     setTranscation:Dispatch<SetStateAction<TranscationType[]>>;
     categoryOptions:Array<{ label: string; value: string }>;
 }
-const IncomeExpense=({chartData,chartOptions,loading,transcations,categoryOptions}:IncomeExpenseProps)=>{
+const IncomeExpense=({chartData,chartOptions,loading,transcations}:IncomeExpenseProps)=>{
     return(
         <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mb-4">
                             <Card className="p-2 shadow rounded-lg h-96 flex flex-col dark:border dark:border-white">
@@ -39,8 +39,61 @@ const IncomeExpense=({chartData,chartOptions,loading,transcations,categoryOption
                                         <span className="text-sm font-medium text-gray-800 dark:text-indigo-300">{transcations.length}</span>
                                     </div>
                                     <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-500 dark:text-white">💰 Income Count</span>
+                                        <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                                            {transcations.filter(t => t.type === 'income').length}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-500 dark:text-white">💸 Expense Count</span>
+                                        <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                                            {transcations.filter(t => t.type === 'expense').length}
+                                        </span>
+                                    </div>
+                                    {/* <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-500 dark:text-white">Total Income</span>
+                                        <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                                            ₹{transcations
+                                                .filter(t => t.type === 'income')
+                                                .reduce((sum, t) => sum + (t.amount || 0), 0)
+                                                .toLocaleString('en-IN')}
+                                        </span>
+                                    </div> */}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-500 dark:text-white">Total Expense</span>
+                                        <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                                            ₹{transcations
+                                                .filter(t => t.type === 'expense')
+                                                .reduce((sum, t) => sum + (t.amount || 0), 0)
+                                                .toLocaleString('en-IN')}
+                                        </span>
+                                    </div>
+                                    <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                                        {/* <div className="flex items-center justify-between">
+                                            <span className="text-sm font-semibold text-gray-700 dark:text-white">Net Balance</span>
+                                            <span className={`text-sm font-bold ${
+                                                (transcations
+                                                    .filter(t => t.type === 'income')
+                                                    .reduce((sum, t) => sum + (t.amount || 0), 0) -
+                                                transcations
+                                                    .filter(t => t.type === 'expense')
+                                                    .reduce((sum, t) => sum + (t.amount || 0), 0)) >= 0 
+                                                    ? 'text-green-600 dark:text-green-400' 
+                                                    : 'text-red-600 dark:text-red-400'
+                                            }`}>
+                                                ₹{(transcations
+                                                    .filter(t => t.type === 'income')
+                                                    .reduce((sum, t) => sum + (t.amount || 0), 0) -
+                                                transcations
+                                                    .filter(t => t.type === 'expense')
+                                                    .reduce((sum, t) => sum + (t.amount || 0), 0))
+                                                    .toLocaleString('en-IN')}
+                                            </span>
+                                        </div> */}
+                                    </div>
+                                    <div className="flex items-center justify-between">
                                         <span className="text-sm text-gray-500 dark:text-white">Top category</span>
-                                        <span className="text-sm font-medium text-gray-800 dark:text-green-400">
+                                        <span className="text-sm font-medium text-gray-800 dark:text-indigo-300">
                                             {(() => {
                                                 const counts: Record<string, number> = {};
                                                 transcations.forEach((t) => {
@@ -53,10 +106,6 @@ const IncomeExpense=({chartData,chartOptions,loading,transcations,categoryOption
                                                 return entries[0][0];
                                             })()}
                                         </span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm text-gray-500 dark:text-white" >Categories</span>
-                                        <span className="text-sm font-medium text-gray-800 dark:text-blue-400">{categoryOptions.length}</span>
                                     </div>
                                 </div>
                             </Card>

@@ -1,4 +1,4 @@
-import { useContext, useEffect,  useRef, useState, type FC, type Ref } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, type FC, type Ref } from "react";
 import Transcation from "../components/Transactions";
 import { Card } from "primereact/card";
 
@@ -263,7 +263,7 @@ const DashboardL: FC = () => {
 
         setChartBarData(barDataObj)
         setChartBarOptions(barOptionsObj)
-
+      
         const totalsState = charts.totals ?? { income: 0, expense: 0 }
         const doughnutData = {
             labels: ['Income', 'Expense'],
@@ -284,12 +284,19 @@ const DashboardL: FC = () => {
         setChartData(doughnutData)
         setChartOptions(doughnutOptions)
 
-        // budgets are read directly from the charts slice (charts.budget)
         setPredictExpense(charts.predictExpense ?? null)
         setLoading(false)
     }, [charts])
  
-
+      const DisplayDate = useMemo(() => {
+            let ShowDate = currentMonth;
+            if(useDashboard.month !== -1)
+            {
+                const monthName = monthOptions.at(useDashboard.month - 1)?.label?.toString() || "";
+                ShowDate = monthName ? `${monthName} ${useDashboard.year!=-1?useDashboard.year:new Date().getFullYear()}` : currentMonth;
+            }
+            return ShowDate;
+        }, [useDashboard.month, useDashboard.year, currentMonth, monthOptions]);
 
 
     return (
@@ -297,9 +304,14 @@ const DashboardL: FC = () => {
         <div className="flex flex-col items-center w-full min-h-screen gap-6 py-8 px-4 bg-gray-200  dark:bg-none dark:bg-black ">
          <Toast ref={toast}/>
             <div className="w-full max-w-7xl  mt-3">
-                <div className="flex items-center justify-between mb-6">
+                
+                <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+                         <div>
+                        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-indigo-300">Dashboard</h1>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Overview · {DisplayDate}</p>
+                    </div>
                 <SelectButton options={options} value={dashboardView} onChange={(e:any)=>setDashboardView(e.value)} />
-                <div className="flex gap-2 ml-4">
+                <div className="flex gap-2 ml-4 flex-col  md:flex-row">
                     <Dropdown options={monthOptions} optionLabel="label" optionValue="value" value={useDashboard.month} onChange={(e:any)=>useDashboard.setMonth(e.value)} placeholder="Month" className="bg-white" />
                     <Dropdown options={yearOptions} optionLabel="label" optionValue="value" value={useDashboard.year} onChange={(e:any)=>useDashboard.setYear(e.value)} placeholder="Year" className="bg-white" />
                 </div>
@@ -355,10 +367,7 @@ const DashboardL: FC = () => {
                     </div>
                 )}
             />
-                    <div>
-                        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-indigo-300">Dashboard</h1>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Overview · {currentMonth}</p>
-                    </div>
+               
                 </div>
             {(dashboardView==="Overview"?(<>
                <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading}  predictExpense={predictExpense}/>

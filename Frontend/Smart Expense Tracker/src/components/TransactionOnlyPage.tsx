@@ -216,7 +216,7 @@ const Transcation:FC=()=>
             {/* Header Section */}
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 mt-7 lg:mt-2">
                         <div className="bg-indigo-500 p-3 rounded-lg">
                             <DollarSign className="w-6 h-6 text-white" />
                         </div>
@@ -236,7 +236,6 @@ const Transcation:FC=()=>
                 <p className="text-gray-600 dark:text-gray-400">Manage and track all your income and expenses</p>
             </div>
 
-            {/* Add Transaction Dialog */}
             <Dialog 
                 header={
                     <div className="flex items-center gap-2">

@@ -27,6 +27,10 @@ const budgetSchema = new mongoose.Schema(
   limit: {
     type: Number,
     required: true
+  },
+  isRecurring:{
+    type:Boolean,
+    default:false
   }
 },
 {

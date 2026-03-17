@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import Budget from "../models/Budget.js";
 import Transaction from "../models/Transaction.js";
 import LogService from "./LogService.js";
-
+import user from '../models/user.js';
 class BudgetService {
 
     async CreateBudget(budgetData, userId) {
@@ -46,47 +46,46 @@ class BudgetService {
             throw error;
         }
     }
-    async getBudgetMonths(userId)
-    {try{
-        console.log("userId:"+userId);
-        const months=await Budget.aggregate([
-            {
-                $match:{
-                    userId:new mongoose.Types.ObjectId(userId)
-                },
-            },
+    async getBudgetMonths(userId) {
+        try {
+            console.log("userId:" + userId);
+            const months = await Budget.aggregate([
                 {
-                $group: {
-                    _id: {
-                        year: "$year" ,
-                        month: "$month" 
+                    $match: {
+                        userId: new mongoose.Types.ObjectId(userId)
                     },
-                
                 },
-            },
-            {
-                $sort: {
-                    "_id.year": 1,
-                    "_id.month": 1
-                }
-            },
+                {
+                    $group: {
+                        _id: {
+                            year: "$year",
+                            month: "$month"
+                        },
 
-            {
-                $project: {
-                    _id: 0,
-                    year: "$_id.year",
-                    month: "$_id.month",
-   
+                    },
+                },
+                {
+                    $sort: {
+                        "_id.year": 1,
+                        "_id.month": 1
+                    }
+                },
+
+                {
+                    $project: {
+                        _id: 0,
+                        year: "$_id.year",
+                        month: "$_id.month",
+
+                    }
                 }
-            }
-  
-            
-        ]);
-        console.log(months);
-        return months;
-             
-        }catch(error)
-        {
+
+
+            ]);
+            console.log(months);
+            return months;
+
+        } catch (error) {
             throw new Error(error);
         }
     }
@@ -118,12 +117,13 @@ class BudgetService {
         }
     }
 
-    async GetBudgets(userId,month,year) {
+    async GetBudgets(userId, month, year) {
         try {
+            this.CreateRecurringBudget(userId);
             console.log(month);
             console.log(year);
             console.log(userId);
-            const budgets = await Budget.find({ userId ,month:month,year:year})
+            const budgets = await Budget.find({ userId, month: month, year: year })
                 .populate("categoryId", "name");
             // console.log("Budgets:"+budgets);
             return budgets;
@@ -175,21 +175,90 @@ class BudgetService {
             throw error;
         }
     }
+ async CreateRecurringBudget(userId) {
+    try {
+        const now = new Date();
 
-    async GetBudgetUsage(userId, categoryId, month, year) {
-        try {
-            console.log(userId,categoryId,month,year);
-            if(year==-1){
-                year=new Date().getFullYear();
+        const existingUser = await user.findById(userId);
+        if (!existingUser) {
+            throw new Error("No User Found");
+        }
+
+        let lastMonth = now.getMonth();
+        let lastYear = now.getFullYear();
+
+        if (lastMonth < 0) {
+            lastMonth = 11;
+            lastYear -= 1;
+        }
+
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        const lastMonthBudgets = await Budget.find({
+            userId,
+            month: lastMonth,
+            year: lastYear,
+            isRecurring: true
+        });
+        console.log("last months "+lastMonth);
+        if (!lastMonthBudgets.length) {
+            return;
+        }
+
+        const currentBudgets = await Budget.find({
+            userId,
+            month: currentMonth+1,
+            year: currentYear
+        });
+
+        const existingCategories = new Set(
+            currentBudgets.map(b => b.categoryId.toString())
+        );
+
+        const newBudgets = [];
+
+        for (const budget of lastMonthBudgets) {
+            if (existingCategories.has(budget.categoryId.toString())) {
+                continue;
             }
-            if(month==-1)
-            {
-                year=new Date().getMonth();
+
+            newBudgets.push({
+                userId,
+                categoryId: budget.categoryId,
+                limit: budget.limit,
+                month: currentMonth+1,
+                year: currentYear,
+                isRecurring: true
+            });
+        }
+
+        if (newBudgets.length > 0) {
+            await Budget.insertMany(newBudgets);
+        }
+        console.log("new Budgets"+newBudgets);
+    } catch (error) {
+        throw error;
+    }
+}
+    async GetBudgetUsage(userId, categoryId, month, year) {
+
+        try {
+
+
+
+            // console.log(userId,categoryId,month,year);
+
+            if (year == -1) {
+                year = new Date().getFullYear();
+            }
+            if (month == -1) {
+                year = new Date().getMonth();
             }
             const startDate = new Date(year, month - 2, 1);
-        
-            const endDate = new Date(year, month-1, 30);
-           
+
+            const endDate = new Date(year, month - 1, 30);
+
             const expenses = await Transaction.aggregate([
                 {
                     $match: {
@@ -202,7 +271,7 @@ class BudgetService {
                 },
                 {
                     $group: {
-                        _id:null,
+                        _id: null,
                         totalSpent: { $sum: "$amount" }
                     }
                 }
@@ -211,16 +280,16 @@ class BudgetService {
             const spent = expenses.length ? expenses[0].totalSpent : 0;
             // console.log(expenses);
             const budget = await Budget.findOne({
-                userId:userId,
-                categoryId:categoryId,
-                month:month-1,
-                year:year
+                userId: userId,
+                categoryId: categoryId,
+                month: month - 1,
+                year: year
             });
             // console.log(budget);
             if (!budget) {
                 return { spent, remaining: 0, limit: 0 };
             }
-         
+
             return {
                 limit: budget.limit,
                 spent: spent,

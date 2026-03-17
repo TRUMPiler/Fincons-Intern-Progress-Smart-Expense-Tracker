@@ -7,6 +7,7 @@ import { Dropdown } from "primereact/dropdown";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Toast } from "primereact/toast";
+import { InputSwitch } from "primereact/inputswitch";
 // import { InputNumber } from "primereact/inputnumber";
 
 
@@ -19,6 +20,7 @@ type BudgetProp = {
   limit: number;
   spent?: number;
   remaining?: number;
+  isRecurring:boolean;
 };
 type CategoryOption = { label: string; value: string; };
 type MonthOptions = { label: string; value: number; };
@@ -37,6 +39,8 @@ const Budget: FC = () => {
   const [budgets, setBudgets] = useState<BudgetProp[]>([]);
   const [budgetCategory, setBudgetCategory] = useState('');
   const [limit, setLimit] = useState<number>(1);
+  const [isRecurring,setisRecurring]=useState<boolean>(false);
+ 
   const [budgetCategoryOptions, setBudgetCategoryOptions] = useState<CategoryOption[]>([]);
   const [typedCategory, setTypedCategory] = useState('');
   const[budgetId,setBudgetId]=useState<string>('');
@@ -54,7 +58,7 @@ const Budget: FC = () => {
       .then((response) => {
         if (response?.data?.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
           const fetchedBudgets = response.data.data;
-
+          console.log(response);
           Promise.all(
             fetchedBudgets.map(async (budget: any) => {
               const categoryId = getCategoryId(budget.categoryId);
@@ -63,7 +67,7 @@ const Budget: FC = () => {
                 const month=filterMonth==0?budget.month+1:filterMonth+1
                 const year=filterYear==0?budget.year:filterYear;
                 const { data } = await api.get(`/api/budget/usage`, {
-                
+                  
                   params: { userId: userid, categoryId, month:month, year: year }
                 });
                 console.log(budget.month);
@@ -84,9 +88,10 @@ const Budget: FC = () => {
         console.log(response.data.data);
         setFilterDates(response.data.data);
       })
+      
     api.get(`/api/category/?userId=${userid}`)
       .then((response) => {
-        console.log(response);
+        // console.log(response);
         const categories = response?.data?.data || [];
         const options = categories.map((c: any) => ({ label: c.name, value: c._id }));
 
@@ -100,8 +105,7 @@ const Budget: FC = () => {
       userId: sessionStorage.getItem("id"),
       categoryId: budgetCategory,
       limit: Number(limit),
-      month: new Date().getMonth() + 1,
-      year: new Date().getFullYear(),
+      isRecurring:isRecurring
     }, {
       headers: {
         Accept: "application/json"
@@ -128,6 +132,7 @@ const Budget: FC = () => {
         setBudgetCategory('');
         setLimit(1);
         setBudgetId('');
+        setisRecurring(false);
         toast.current?.show({ severity: "success", summary: "Budget Added", detail: `Budget for ${catName}` });
       }
     }).catch((err) => {
@@ -144,6 +149,7 @@ const Budget: FC = () => {
       limit: Number(limit),
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
+      isRecurring:isRecurring,
     }, {
       headers: {
         Accept: "application/json"
@@ -162,6 +168,7 @@ const Budget: FC = () => {
           limit: Number(created?.limit ?? limit),
           spent: created?.spent ?? 0,
           remaining: created?.remaining ?? Number(limit),
+          isRecurring:created.isRecurring
         };
         setBudgets((prev) => [createdBudget, ...prev]);
         setBudgetDialogVisible(false);
@@ -255,6 +262,10 @@ const Budget: FC = () => {
             }} className="w-full" />
             <label>Enter Budget Amount</label>
           </FloatLabel>
+            <div>
+            <label>Do you this Limit to set for upcoming months as well?</label>
+            <InputSwitch  checked={isRecurring} onChange={(e)=>{setisRecurring(e.value)}} />
+          </div>
           <button 
             className="w-full bg-linear-to-r from-indigo-500 to-purple-500 text-white p-3 rounded-lg font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all shadow-md" 
             type="button" 
@@ -310,6 +321,10 @@ const Budget: FC = () => {
             }} className="w-full" />
             <label>Budget Amount</label>
           </FloatLabel>
+            <div>
+            <label>Do you this Limit to set for upcoming months as well?</label>
+            <InputSwitch  checked={isRecurring} onChange={(e)=>{setisRecurring(e.value)}} />
+          </div>
           <button 
             className="w-full bg-linear-to-r from-green-500 to-emerald-500 text-white p-3 rounded-lg font-semibold hover:from-green-600 hover:to-emerald-600 transition-all shadow-md" 
             type="button" 
@@ -317,6 +332,7 @@ const Budget: FC = () => {
           >
             Update Budget
           </button>
+        
         </form>
       </Dialog>
 
@@ -423,6 +439,7 @@ const Budget: FC = () => {
                           setBudgetCategory(budget.categoryId ? budget.categoryId : "");
                           setLimit(budget.limit);
                           setBudgetId(budget._id);
+                          setisRecurring(budget.isRecurring)
                         }}
                       >
                         ✏️ Update Budget

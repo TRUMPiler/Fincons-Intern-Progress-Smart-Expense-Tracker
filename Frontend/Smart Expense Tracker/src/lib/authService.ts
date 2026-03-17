@@ -20,7 +20,7 @@ class AuthService {
    * Store access token and user info in localStorage
    * Refresh token is automatically stored in HTTP-only cookie by backend
    */
-  setUser(user: AuthUser, accessToken: string, refreshToken?: string): void {
+  setUser(user: AuthUser, accessToken: string): void {
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem(this.accessTokenKey, accessToken);
     // refreshToken is no longer stored in localStorage - it's in an HTTP-only cookie

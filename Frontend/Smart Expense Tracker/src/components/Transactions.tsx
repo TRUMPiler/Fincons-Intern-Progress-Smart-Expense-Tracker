@@ -81,7 +81,8 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
     };
     const toast = useRef<Toast | null>(null);
     useEffect(() => {
-    
+        console.log(yearOptions);
+        console.log(selectedYear);
         // const JwtToken = sessionStorage.getItem("jwtToken");
         const userId = sessionStorage.getItem("id");
         if(!userId)

@@ -5,7 +5,7 @@ import { Card } from "primereact/card";
 import api from "../lib/axiosInstance";
 import AlertGif from "../assets/downloadAlert.gif";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { DashboardContext, fetchAlerts, fetchBudgetWiseUsage, fetchCategorySpending, fetchFinancialHealth, fetchMonthlyTrend, fetchPredict, fetchTotals, type Alert, type breakdown, type summary } from "../store/slices/chartsSlice";
+import { DashboardContext, fetchAlerts, fetchAvailableMonths, fetchBudgetWiseUsage, fetchCategorySpending, fetchFinancialHealth, fetchMonthlyTrend, fetchPredict, fetchTotals, type Alert, type breakdown, type summary } from "../store/slices/chartsSlice";
 
 import { Toast } from "primereact/toast";
 import { confirmDialog, ConfirmDialog } from "primereact/confirmdialog";
@@ -66,10 +66,10 @@ const DashboardL: FC = () => {
     const [chartBarOptions, setChartBarOptions] = useState({});
     const [chartMonthlyOptions, setChartMonthlyOptions] = useState({});
     const [alerts,setAlerts]=useState<Alert[]>([]);
+    const [dynamicMonthOptions, setDynamicMonthOptions] = useState<Array<{ label: string; value: number }>>([]);
+    const [dynamicYearOptions, setDynamicYearOptions] = useState<Array<{ label: string; value: number }>>([]);
+    const [isInitialized, setIsInitialized] = useState(false);
     const useDashboard=useContext(DashboardContext);
-    const monthOptions = Months.map((m, i) => ({ label: m, value: i + 1 }));
-    const currentYear = new Date().getFullYear();
-    const yearOptions = Array.from({ length: 5 }).map((_, i) => ({ label: String(currentYear - i), value: currentYear - i }));
     const [fiananceHealth,setFiananceHealth]=useState<health>({label:"",score:0,breakdown:{
         savings:0,
         stability:0,
@@ -167,6 +167,7 @@ const DashboardL: FC = () => {
             setLoading(false)
             return
         }
+        dispatch(fetchAvailableMonths())
         dispatch(fetchFinancialHealth({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchAlerts())
         dispatch(fetchBudgetWiseUsage({ month: useDashboard.month, year: useDashboard.year }))
@@ -307,16 +308,53 @@ const DashboardL: FC = () => {
         setPredictExpense(charts.predictExpense ?? null)
         setLoading(false)
     }, [charts])
+
+    useEffect(() => {
+        if (charts.availableMonths && charts.availableMonths.length > 0 && !isInitialized) {
+            // Extract unique months and years from available months
+            const uniqueMonthsSet = new Set(charts.availableMonths.map(m => m.month));
+            const uniqueYearsSet = new Set(charts.availableMonths.map(m => m.year));
+            
+            const monthOpts = Array.from(uniqueMonthsSet).sort().map(month => ({
+                label: Months[month - 1],
+                value: month
+            }));
+            
+            const yearOpts = Array.from(uniqueYearsSet).sort((a, b) => b - a).map(year => ({
+                label: String(year),
+                value: year
+            }));
+            
+            setDynamicMonthOptions(monthOpts);
+            setDynamicYearOptions(yearOpts);
+
+            // Auto-select current month and year only on first load
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth() + 1;
+            const currentYear = currentDate.getFullYear();
+
+            if (uniqueMonthsSet.has(currentMonth) && uniqueYearsSet.has(currentYear)) {
+                useDashboard.setMonth(currentMonth);
+                useDashboard.setYear(currentYear);
+            } else if (monthOpts.length > 0 && yearOpts.length > 0) {
+                // Fallback to first available month and year
+                useDashboard.setMonth(monthOpts[monthOpts.length - 1].value);
+                useDashboard.setYear(yearOpts[0].value);
+            }
+
+            setIsInitialized(true);
+        }
+    }, [charts.availableMonths, isInitialized, useDashboard])
  
       const DisplayDate = useMemo(() => {
             let ShowDate = currentMonth;
             if(useDashboard.month !== -1)
             {
-                const monthName = monthOptions.at(useDashboard.month - 1)?.label?.toString() || "";
+                const monthName = dynamicMonthOptions.at(useDashboard.month - 1)?.label?.toString() || "";
                 ShowDate = monthName ? `${monthName} ${useDashboard.year!=-1?useDashboard.year:new Date().getFullYear()}` : currentMonth;
             }
             return ShowDate;
-        }, [useDashboard.month, useDashboard.year, currentMonth, monthOptions]);
+        }, [useDashboard.month, useDashboard.year, currentMonth, dynamicMonthOptions]);
 
       const getHealthColor = () => {
             const label = fiananceHealth.label.toLowerCase();
@@ -346,8 +384,8 @@ const DashboardL: FC = () => {
                     </div>
                 <SelectButton options={options} value={dashboardView} onChange={(e:any)=>setDashboardView(e.value)} />
                 <div className="flex gap-2 ml-4 flex-col  md:flex-row">
-                    <Dropdown options={monthOptions} optionLabel="label" optionValue="value" value={useDashboard.month} onChange={(e:any)=>useDashboard.setMonth(e.value)} placeholder="Month" className="bg-white" />
-                    <Dropdown options={yearOptions} optionLabel="label" optionValue="value" value={useDashboard.year} onChange={(e:any)=>useDashboard.setYear(e.value)} placeholder="Year" className="bg-white" />
+                    <Dropdown options={dynamicMonthOptions} optionLabel="label" optionValue="value" value={useDashboard.month} onChange={(e:any)=>useDashboard.setMonth(e.value)} placeholder="Month" className="bg-white" />
+                    <Dropdown options={dynamicYearOptions} optionLabel="label" optionValue="value" value={useDashboard.year} onChange={(e:any)=>useDashboard.setYear(e.value)} placeholder="Year" className="bg-white" />
                 </div>
             <ConfirmDialog
                 group="headless"

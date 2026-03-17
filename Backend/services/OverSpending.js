@@ -64,7 +64,7 @@ const message = `You are spending significantly more on ${category.name} this mo
        message
      });
     //  console.log("Invoked");
- await mailer.sendMail({
+ await mailer.emails.send({
   from: '"MoneyMint" <naisal036@gmail.com>',
   to: user.email,
   subject: "⚠️ Overspending Alert - MoneyMint",

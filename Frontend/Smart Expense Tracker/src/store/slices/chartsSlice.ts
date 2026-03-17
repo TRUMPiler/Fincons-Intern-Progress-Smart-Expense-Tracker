@@ -5,6 +5,7 @@ import { createContext } from 'react';
 export type SpendingCategory = { total: number; category: string }
 export type MonthTrend = { totalSpent: number; month: number; year: number }
 export type Totals = { income: number; expense: number }
+export type AvailableMonth = { month: number; year: number }
 export type DashboardProps={month:number,year:number};
 export type Alert = { _id: string, message: string, type: "budget_exceeded" | "overspending", isRead: boolean };
 const getCategoryId = (cat: any) => typeof cat === "string" ? cat : cat?._id ?? cat?.id ?? "";
@@ -71,7 +72,8 @@ interface ChartsState {
     status: 'idle' | 'loading' | 'succeeded' | 'failed'
     error: string | null,
     Alerts:Alert[],
-    financialHealth:FinancialHealth|null;
+    financialHealth:FinancialHealth|null,
+    availableMonths: AvailableMonth[]
 }
 
 const initialState: ChartsState = {
@@ -84,7 +86,7 @@ const initialState: ChartsState = {
     budget: [],
     Alerts:[],
     financialHealth:null,
-
+    availableMonths: [],
 }
 export const fetchAlerts = createAsyncThunk<Alert[], void, { rejectValue: string }>("charts/alerts",
     async (_, thunkAPI) => {
@@ -268,6 +270,22 @@ export const fetchTotals = createAsyncThunk<Totals, DashboardProps | undefined, 
     }
 )
 
+export const fetchAvailableMonths = createAsyncThunk<AvailableMonth[], void, { rejectValue: string }>(
+    'charts/fetchAvailableMonths',
+    async (_, thunkAPI) => {
+        try {
+            const userid = sessionStorage.getItem('id')
+            if (!userid) return thunkAPI.rejectWithValue('No user id')
+            const res = await api.get(`/api/charts/months/${userid}`, {
+                headers: { Accept: 'application/json' },
+            })
+            return res.data?.data ?? []
+        } catch (err: any) {
+            return thunkAPI.rejectWithValue(err?.response?.data?.message ?? err.message ?? String(err))
+        }
+    }
+)
+
 const chartsSlice = createSlice({
     name: 'charts',
     initialState,
@@ -350,6 +368,17 @@ const chartsSlice = createSlice({
             .addCase(fetchFinancialHealth.rejected,(state,action)=>{
                 state.status="failed";
                 state.error=action.payload??"Failed to Fetch Financial Health"
+            })
+            .addCase(fetchAvailableMonths.pending,(state)=>{
+                state.status='loading';
+            })
+            .addCase(fetchAvailableMonths.fulfilled,(state,action)=>{
+                state.status='succeeded';
+                state.availableMonths=action.payload??[];
+            })
+            .addCase(fetchAvailableMonths.rejected,(state,action)=>{
+                state.status="failed";
+                state.error=action.payload??"Failed to Fetch Available Months"
             });
     },
 })

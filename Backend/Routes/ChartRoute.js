@@ -8,5 +8,6 @@ router.get("/:userId", authHandler,ChartController.getIncomeExpense);
 router.get("/predict/:userId", authHandler,ChartController.getPredictedExpense);
 router.get("/cspending/:userId",authHandler,ChartController.CategoryWiseSpending);
 router.get("/monthlytrend/:userId",authHandler,ChartController.MonthlyBudget);
+router.get("/months/:userId", authHandler, ChartController.getAvailableMonths);
 
 export default router;

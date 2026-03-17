@@ -43,6 +43,7 @@ class TransactionService {
         try{
          const allTranscation = await Transaction.find({
                 userId: userId,
+                isDelete:false
             }).populate("category");
             return allTranscation;
         }catch(error)
@@ -119,8 +120,8 @@ class TransactionService {
                 if (limit === 0) return;
                 if (User?.email) {
                     (async () => {
-                        const info = await mailer.sendMail({
-                            from: '"MoneyMint" <naisal036@gmail.com>',
+                        const info = await mailer.emails.send({
+                            from: '"MoneyMint" <fincons@moneymint.tech>',
                             to: User.email,
                             subject: "⚠️ Budget Alert from MoneyMint",
                             text: `You have used more than 80% of your budget on ${category.name}.`,
@@ -159,7 +160,7 @@ class TransactionService {
                 `
                         });
 
-                        console.log("Budget alert email sent:", info.messageId);
+                        // console.log("Budget alert email sent:", info.messageId);
                     })();
                 }
             }
@@ -379,8 +380,8 @@ class TransactionService {
                 if (limit === 0) return;
                 if (User?.email) {
                     (async () => {
-                        const info = await mailer.sendMail({
-                            from: '"MoneyMint" <naisal036@gmail.com>',
+                        const info = await mailer.emails.send({
+                            from: '"MoneyMint" <fincons@moneymint.tech>',
                             to: User.email,
                             subject: "⚠️ Budget Alert from MoneyMint",
                             text: `You have used more than 80% of your budget on ${Category.name}.`,

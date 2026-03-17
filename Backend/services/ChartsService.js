@@ -10,6 +10,46 @@ function getHealthLabel(score) {
 }
 class ChartService {
 
+    async getAvailableMonths(userId) {
+        try {
+            const userObjectId = new mongoose.Types.ObjectId(userId);
+            const months = await Transaction.aggregate([
+                {
+                    $match: {
+                        userId: userObjectId,
+                        isDelete: false
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            year: { $year: "$date" },
+                            month: { $month: "$date" }
+                        }
+                    }
+                },
+                {
+                    $sort: {
+                        "_id.year": 1,
+                        "_id.month": 1
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        year: "$_id.year",
+                        month: "$_id.month"
+                    }
+                }
+            ]);
+
+            console.log("Available months:", months);
+            return months;
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+
     async PredictedExpense(userId) {
         const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 

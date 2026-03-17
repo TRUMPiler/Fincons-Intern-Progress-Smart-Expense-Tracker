@@ -61,6 +61,17 @@ class ChartController {
             next(error);
         }
     }
+    async getAvailableMonths(req,res,next)
+    {
+        try{
+            const userId = req.params.userId;
+            const data = await ChartService.getAvailableMonths(userId);
+            return res.status(200).json(Response.success(data,"Available months retrieved",200));
+        }catch(error)
+        {
+            next(error);
+        }
+    }
 }
 
 export default new ChartController();

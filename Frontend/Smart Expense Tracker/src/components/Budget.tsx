@@ -8,7 +8,7 @@ import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Toast } from "primereact/toast";
 import { InputSwitch } from "primereact/inputswitch";
-// import { InputNumber } from "primereact/inputnumber";
+import { ProgressSpinner } from "primereact/progressspinner";
 
 
 type BudgetProp = {
@@ -35,8 +35,10 @@ const Budget: FC = () => {
     const [filterMonth,setFilterMonth]=useState<number>(0)
     const [monthOption,setMonthOptions]=useState<MonthOptions[]>([]);
     const [filterYear,setFilterYear]=useState<number>(0)
+    const [isInitialized, setIsInitialized] = useState(false);
   const toast = useRef<Toast | null>(null);
   const [budgets, setBudgets] = useState<BudgetProp[]>([]);
+  const [loading, setLoading] = useState(false);
   const [budgetCategory, setBudgetCategory] = useState('');
   const [limit, setLimit] = useState<number>(1);
   const [isRecurring,setisRecurring]=useState<boolean>(false);
@@ -53,6 +55,7 @@ const Budget: FC = () => {
     if (!userid){
       window.location.href='/login';
     }
+    setLoading(true);
     api
       .get(`/api/budget/?userId=${userid}&month=${filterMonth}&year=${filterYear}`)
       .then((response) => {
@@ -77,11 +80,17 @@ const Budget: FC = () => {
                 return { ...budget, categoryId, categoryName, spent: 0, remaining: budget.limit };
               }
             })
-          ).then(setBudgets);
+          ).then((results) => {
+            setBudgets(results);
+            setLoading(false);
+          });
+        } else {
+          setLoading(false);
         }
       })
       .catch((error) => {
         console.log("Budget fetch failed, using sample data", error);
+        setLoading(false);
       });
       api.get(`/api/budget/budgetmonths/${userid}`).then((response)=>{
         console.log(response);
@@ -191,6 +200,29 @@ const Budget: FC = () => {
     }));
     setMonthOptions(monthOptions);
   },[filterDates])
+
+  useEffect(() => {
+    if (filterDates && filterDates.length > 0 && !isInitialized) {
+      const uniqueMonthsSet = new Set(filterDates.map(m => m.month));
+      const uniqueYearsSet = new Set(filterDates.map(m => m.year));
+
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth() + 1;
+      const currentYear = currentDate.getFullYear();
+
+      if (uniqueMonthsSet.has(currentMonth) && uniqueYearsSet.has(currentYear)) {
+        setFilterMonth(currentMonth);
+        setFilterYear(currentYear);
+      } else if (filterDates.length > 0) {
+        const mostRecent = filterDates[filterDates.length - 1];
+        setFilterMonth(mostRecent.month);
+        setFilterYear(mostRecent.year);
+      }
+
+      setIsInitialized(true);
+    }
+  }, [filterDates, isInitialized]);
+
   const createCategory = async (name: string) => {
     try {
       const { data } = await api.post(`/api/category`, 
@@ -360,7 +392,11 @@ const Budget: FC = () => {
 
         {/* Budgets Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(budgets.length > 0 ? (
+          {loading ? (
+            <div className="col-span-full flex items-center justify-center py-16">
+              <ProgressSpinner />
+            </div>
+          ) : budgets.length > 0 ? (
             budgets.map((budget) => {
               const spent = budget.spent ?? 0;
               const percent = budget.limit > 0 ? Math.round((spent / budget.limit) * 100) : 0;
@@ -463,7 +499,7 @@ const Budget: FC = () => {
                 Create First Budget
               </button>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

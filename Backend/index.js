@@ -1,7 +1,8 @@
 import express from "express";
 import { DBconfig } from "./config/config.js";
 import cookieParser from "cookie-parser";
-import mailer from './mailer/Transport.js'
+import { Resend } from "resend";
+import { MailtrapClient } from "mailtrap";
 import userRoutes from "./Routes/UserRoute.js";
 import authRoutes from "./Routes/AuthRoute.js";
 import chatsRoutes from './Routes/ChatRoute.js'
@@ -21,21 +22,26 @@ const Port = process.env.PORT || 3000;
 const db = new DBconfig();
 app.use(express.json());
 app.use(cors({
-    origin:process.env.FRONTEND_URL,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+
+
+
+// console.log(process.env.RESEND_API_KEY);
 app.use(cookieParser());
-app.use("/api/auth",authRoutes);
-app.use("/api/cronJob",CronJobRouter);
-app.use("/api/chats",chatsRoutes)
+app.use("/api/auth", authRoutes);
+app.use("/api/cronJob", CronJobRouter);
+app.use("/api/chats", chatsRoutes)
 app.use("/api/user", userRoutes);
-app.use("/api/alert",AlertRoute);
+app.use("/api/alert", AlertRoute);
 app.use("/api/category", categoryRoutes);
 app.use("/api/transcation", transcationRoutes);
 app.use("/api/budget", budgetRoutes);
-app.use("/api/charts",ChartRoute);
+app.use("/api/charts", ChartRoute);
 
 app.use(Error);
 
@@ -43,10 +49,24 @@ app.use(Error);
     try {
         await db.connect();
         await CategoryService.ensureDefaultCategories();
-        app.listen(Port, async() => {
+        app.listen(Port, async () => {
             console.log("Server is listening at http://localhost:" + Port);
+
             // await seedTransactions();
-       
+            // (async function () {
+            //     const { data, error } = await resend.emails.send({
+            //         from: 'Acme <onboarding@resend.dev>',
+            //         to: ['naishal036@gmail.com'],
+            //         subject: 'Hello World',
+            //         html: '<strong>It works!</strong>',
+            //     });
+
+            //     if (error) {
+            //         return console.error({ error });
+            //     }
+
+            //     console.log({ data });
+            // })();
         });
     } catch (err) {
         console.error(err);

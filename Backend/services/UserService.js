@@ -1,5 +1,5 @@
 import UserSchema from "../models/user.js";
-import mailer from "../mailer/Transport.js";
+// import mailer from "../mailer/Transport.js";
 
 class UserService {
 

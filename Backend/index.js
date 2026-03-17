@@ -1,7 +1,7 @@
 import express from "express";
 import { DBconfig } from "./config/config.js";
 import cookieParser from "cookie-parser";
-
+import mailer from './mailer/Transport.js'
 import userRoutes from "./Routes/UserRoute.js";
 import authRoutes from "./Routes/AuthRoute.js";
 import chatsRoutes from './Routes/ChatRoute.js'
@@ -46,6 +46,7 @@ app.use(Error);
         app.listen(Port, async() => {
             console.log("Server is listening at http://localhost:" + Port);
             // await seedTransactions();
+       
         });
     } catch (err) {
         console.error(err);

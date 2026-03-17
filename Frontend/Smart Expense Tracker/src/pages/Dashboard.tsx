@@ -5,7 +5,7 @@ import { Card } from "primereact/card";
 import api from "../lib/axiosInstance";
 import AlertGif from "../assets/downloadAlert.gif";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { DashboardContext, fetchAlerts, fetchBudgetWiseUsage, fetchCategorySpending, fetchMonthlyTrend, fetchPredict, fetchTotals, type Alert } from "../store/slices/chartsSlice";
+import { DashboardContext, fetchAlerts, fetchBudgetWiseUsage, fetchCategorySpending, fetchFinancialHealth, fetchMonthlyTrend, fetchPredict, fetchTotals, type Alert, type breakdown, type summary } from "../store/slices/chartsSlice";
 
 import { Toast } from "primereact/toast";
 import { confirmDialog, ConfirmDialog } from "primereact/confirmdialog";
@@ -41,6 +41,7 @@ export type TranscationType = {
 //     month: number;
 //     year: number;
 // }
+export type health={label:string,score:number,breakdown:breakdown,summary:summary};
 export type BudgetProp = {
     _id: string;
     categoryId?: string;
@@ -69,7 +70,17 @@ const DashboardL: FC = () => {
     const monthOptions = Months.map((m, i) => ({ label: m, value: i + 1 }));
     const currentYear = new Date().getFullYear();
     const yearOptions = Array.from({ length: 5 }).map((_, i) => ({ label: String(currentYear - i), value: currentYear - i }));
-    
+    const [fiananceHealth,setFiananceHealth]=useState<health>({label:"",score:0,breakdown:{
+        savings:0,
+        stability:0,
+        control:0,
+        budget:0
+
+    },summary:{
+        income:0,
+        expense:0,
+        savings:0
+    }});
     const [dashboardView,setDashboardView]=useState<"Overview"|"Budget Meters">("Overview");
     const options=["Overview","Budget Meters"];
     const [currentAlertIndex, setCurrentAlertIndex] = useState<number | null>(null);
@@ -156,7 +167,7 @@ const DashboardL: FC = () => {
             setLoading(false)
             return
         }
-
+        dispatch(fetchFinancialHealth({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchAlerts())
         dispatch(fetchBudgetWiseUsage({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchPredict())
@@ -187,7 +198,16 @@ const DashboardL: FC = () => {
         } else {
             setCurrentAlertIndex(null);
         }
-        
+        setFiananceHealth({
+            label:charts.financialHealth?.label.toString()?charts.financialHealth?.label:"",
+            score:charts.financialHealth?.score?charts.financialHealth?.score:0,
+            breakdown:charts.financialHealth?.breakdown??{savings:0,stability:0,budget:0,control:0},
+            summary:charts.financialHealth?.summary??{
+                income:0,
+                expense:0,
+                savings:0
+            }
+        })
         const monthsData = charts.monthlyTrend ?? []
         const monthLabels = monthsData.map((e) => Months[e.month - 1])
         const monthTotals = monthsData.map((e) => e.totalSpent)
@@ -217,7 +237,7 @@ const DashboardL: FC = () => {
 
         setChartMontlyData(monthlyDataObj)
         setChartMonthlyOptions(monthlyOptionsObj)
-
+    
         const spending = charts.categorySpending ?? []
         const labels = spending.map((s) => s.category)
         const values = spending.map((s) => Number(s.total) || 0)
@@ -298,6 +318,15 @@ const DashboardL: FC = () => {
             return ShowDate;
         }, [useDashboard.month, useDashboard.year, currentMonth, monthOptions]);
 
+      const getHealthColor = () => {
+            const label = fiananceHealth.label.toLowerCase();
+            if(label === "excellent") return "text-green-600 dark:text-green-400";
+            if(label === "good") return "text-blue-600 dark:text-blue-400";
+            if(label === "average") return "text-yellow-600 dark:text-yellow-400";
+            if(label === "poor") return "text-red-600 dark:text-red-400";
+            return "text-gray-600 dark:text-gray-400";
+        }
+
 
     return (
        
@@ -309,6 +338,11 @@ const DashboardL: FC = () => {
                          <div>
                         <h1 className="text-3xl font-extrabold text-gray-900 dark:text-indigo-300">Dashboard</h1>
                         <p className="text-sm text-gray-600 dark:text-gray-300">Overview · {DisplayDate}</p>
+                        {fiananceHealth.label && (
+                            <p className={`text-lg font-semibold ${getHealthColor()}`}>
+                                Financial Health: {fiananceHealth.label} ({fiananceHealth.score}/100)
+                            </p>
+                        )}
                     </div>
                 <SelectButton options={options} value={dashboardView} onChange={(e:any)=>setDashboardView(e.value)} />
                 <div className="flex gap-2 ml-4 flex-col  md:flex-row">
@@ -370,9 +404,9 @@ const DashboardL: FC = () => {
                
                 </div>
             {(dashboardView==="Overview"?(<>
-               <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading}  predictExpense={predictExpense}/>
+               <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading}  predictExpense={predictExpense} />
 
-                <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions}/>
+                <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions} breakdown={fiananceHealth.breakdown} summary={fiananceHealth.summary}/>
                 
                <CategorySpending loading={loading} chartBarData={chartBarData} chartBarOptions={chartBarOptions} categoryOptions={categoryOptions} chartMonthlyData={chartMonthlyData} chartMonthlyOptions={chartMonthlyOptions} transcations={transcations} setTranscation={setTranscations} />
 

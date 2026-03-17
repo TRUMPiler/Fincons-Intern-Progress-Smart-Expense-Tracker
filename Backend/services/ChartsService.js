@@ -1,13 +1,13 @@
-// • Total income vs total expense
-// • Category wise spending chart
-// • Monthly spending trend
-// • Budget usage indicators
-// • Predicted monthly expense
 
 import mongoose from "mongoose";
 import Transaction from "../models/Transaction.js";
-
-
+import Budget from "../models/Budget.js";
+function getHealthLabel(score) {
+    if (score >= 80) return "Excellent";
+    if (score >= 60) return "Good";
+    if (score >= 40) return "Average";
+    return "Poor";
+}
 class ChartService {
 
     async PredictedExpense(userId) {
@@ -129,6 +129,180 @@ class ChartService {
         const row = await Transaction.aggregate(pipeline);
         return row;
     }
+    
+    async getFinancialHealthScore(userId, month, year) {
+        
+        if(month==-1)
+        {
+
+            month=new Date().getMonth()+1;
+        
+        }
+        if(year==-1)
+        {
+
+            year=new Date().getFullYear();
+        }
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    // CURRENT MONTH TRANSACTIONS
+    const transactions = await Transaction.find({
+        userId: userObjectId,
+        isDelete: false,
+        date: { $gte: startDate, $lte: endDate }
+    });
+
+    // If no transactions, return all zeros
+    if (!transactions || transactions.length === 0) {
+        return {
+            score: 0,
+            label: "Poor",
+            breakdown: {
+                savings: 0,
+                budget: 0,
+                control: 0,
+                stability: 0
+            },
+            summary: {
+                income: 0,
+                expense: 0,
+                savings: 0
+            }
+        };
+    }
+
+    // CURRENT MONTH BUDGETS
+    const budgets = await Budget.find({
+        userId: userObjectId,
+        month,
+        year
+    });
+
+    let income = 0;
+    let expense = 0;
+
+    transactions.forEach(t => {
+        if (t.type === "income") income += t.amount;
+        else expense += t.amount;
+    });
+
+    console.log("Financial Health - Transactions found:", transactions.length);
+    console.log("Financial Health - Income:", income, "Expense:", expense);
+    console.log("Financial Health - Budgets found:", budgets.length);
+
+    // -------------------------------
+    // 1. SAVINGS SCORE (40)
+    // -------------------------------
+    const savings = income - expense;
+    const savingsRatio = income > 0 ? savings / income : 0;
+    const scoreSavings = Math.max(0, savingsRatio * 40);
+
+    // -------------------------------
+    // 2. BUDGET ADHERENCE (30)
+    // -------------------------------
+    let totalBudget = 0;
+    let overspend = 0;
+
+    for (const b of budgets) {
+        totalBudget += b.limit;
+
+        const spent = transactions
+            .filter(t =>
+                t.category?.toString() === b.categoryId?.toString() &&
+                t.type === "expense"
+            )
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        if (spent > b.limit) {
+            overspend += (spent - b.limit);
+        }
+    }
+
+    const adherence =
+        totalBudget > 0 ? (totalBudget - overspend) / totalBudget : 1;
+
+    const scoreBudget = Math.max(0, adherence * 30);
+
+    // -------------------------------
+    // 3. EXPENSE CONTROL (10)
+    // -------------------------------
+    const expenseRatio = income > 0 ? expense / income : 1;
+    const scoreControl = Math.max(0, (1 - expenseRatio) * 10);
+
+    // -------------------------------
+    // 4. SPENDING STABILITY (20)
+    // (Compare last 3 months)
+    // -------------------------------
+    const prevMonths = [];
+
+    for (let i = 1; i <= 3; i++) {
+        const d = new Date(year, month - 1 - i, 1);
+        prevMonths.push({
+            start: new Date(d.getFullYear(), d.getMonth()+1, 1),
+            end: new Date(d.getFullYear(), d.getMonth() + 2, 0, 23, 59, 59)
+        });
+    }
+
+    const monthlyExpenses = [];
+
+    for (const m of prevMonths) {
+        const prevTx = await Transaction.find({
+            userId: userObjectId,
+            isDelete: false,
+            type: "expense",
+            date: { $gte: m.start, $lte: m.end }
+        });
+
+        const total = prevTx.reduce((sum, t) => sum + t.amount, 0);
+        monthlyExpenses.push(total);
+    }
+
+    let scoreStability = 20;
+
+    if (monthlyExpenses.length > 0) {
+        const avg =
+            monthlyExpenses.reduce((a, b) => a + b, 0) /
+            monthlyExpenses.length;
+
+        const variance =
+            monthlyExpenses.reduce((sum, val) => {
+                return sum + Math.pow(val - avg, 2);
+            }, 0) / monthlyExpenses.length;
+
+        const stdDev = Math.sqrt(variance);
+
+        scoreStability = Math.max(0, (1 / (1 + stdDev / (avg || 1))) * 20);
+    }
+
+    // -------------------------------
+    // FINAL SCORE
+    // -------------------------------
+    let finalScore =
+        scoreSavings +
+        scoreBudget +
+        scoreControl +
+        scoreStability;
+
+    finalScore = Math.max(0, Math.min(100, finalScore));
+
+    return {
+        score: Math.round(finalScore),
+        label: getHealthLabel(finalScore),
+        breakdown: {
+            savings: Math.round(scoreSavings * 100) / 100,
+            budget: Math.round(scoreBudget * 100) / 100,
+            control: Math.round(scoreControl * 100) / 100,
+            stability: Math.round(scoreStability * 100) / 100
+        },
+        summary: {
+            income: income || 0,
+            expense: expense || 0,
+            savings: savings || 0
+        }
+    };
+}
     async MonthlyBudget(userId,month,year) {
         // Fallback: Convert 0/-1 to current month/year (controller should handle this, but defensive)
         let monthNum = (month == 0 || month == -1 || month === undefined) ? new Date().getMonth() + 1 : month;
@@ -176,7 +350,7 @@ class ChartService {
         return pipeline;
     }
 
-    // const 
+
 
 }
 

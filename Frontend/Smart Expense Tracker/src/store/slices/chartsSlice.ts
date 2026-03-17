@@ -9,6 +9,7 @@ export type DashboardProps={month:number,year:number};
 export type Alert = { _id: string, message: string, type: "budget_exceeded" | "overspending", isRead: boolean };
 const getCategoryId = (cat: any) => typeof cat === "string" ? cat : cat?._id ?? cat?.id ?? "";
 const getCategoryName = (cat: any) => typeof cat === "object" && cat ? cat.name ?? cat.label : "";
+
 export interface DashboardContextType extends DashboardProps {
     setMonth: (m: number) => void;
     setYear: (y: number) => void;
@@ -19,7 +20,37 @@ export const DashboardContext = createContext<DashboardContextType>({
     setMonth: () => {},
     setYear: () => {}
 });
-
+export type breakdown={
+    savings:number;
+    budget: number;
+    control: number;
+    stability: number;
+}
+export type summary={
+    income: number;
+    expense: number;
+    savings: number;
+}
+export interface FinancialHealth{
+     score: number;
+     label: string;
+    breakdown:breakdown;
+    summary:summary;
+}
+// (method) ChartService.getFinancialHealthScore(userId: any, month: any, year: any): Promise<{
+//     score: number;
+//     label: any;
+//     breakdown: {
+//         savings: number;
+//         budget: number;
+//         control: number;
+//         stability: number;
+//     };
+//     summary: {
+//         income: number;
+//         expense: number;
+//         savings: number;
+//     };
 type BudgetProp = {
     _id: string;
     categoryId?: string; 
@@ -39,7 +70,8 @@ interface ChartsState {
     budget: BudgetProp[],
     status: 'idle' | 'loading' | 'succeeded' | 'failed'
     error: string | null,
-    Alerts:Alert[]
+    Alerts:Alert[],
+    financialHealth:FinancialHealth|null;
 }
 
 const initialState: ChartsState = {
@@ -50,7 +82,9 @@ const initialState: ChartsState = {
     status: 'idle',
     error: null,
     budget: [],
-    Alerts:[]
+    Alerts:[],
+    financialHealth:null,
+
 }
 export const fetchAlerts = createAsyncThunk<Alert[], void, { rejectValue: string }>("charts/alerts",
     async (_, thunkAPI) => {
@@ -72,6 +106,7 @@ export const fetchAlerts = createAsyncThunk<Alert[], void, { rejectValue: string
             );
         }
     })
+
 export const fetchBudgetWiseUsage = createAsyncThunk<
     BudgetProp[],
     DashboardProps | undefined,
@@ -178,7 +213,21 @@ export const fetchMonthlyTrend = createAsyncThunk<MonthTrend[], void, { rejectVa
         }
     }
 )
-
+export const fetchFinancialHealth=createAsyncThunk<FinancialHealth,DashboardProps|null,{rejectValue:string}>(
+    'charts/fetchFinancialHealth',
+    async(payload,thunkAPI)=>{
+         try {
+            const userid = sessionStorage.getItem('id')
+            if (!userid) return thunkAPI.rejectWithValue('No user id')
+            const res = await api.get(`/api/charts/healthUpdate/?userId=${userid}&month=${payload?.month}&year=${payload?.year}`, {
+                headers: { Accept: 'application/json' },
+            })
+            return res.data.data;
+        } catch (err: any) {
+            return thunkAPI.rejectWithValue(err?.response?.data?.message ?? err.message ?? String(err))
+        }
+    }
+)
 export const fetchPredict = createAsyncThunk<number | null, void, { rejectValue: string }>(
     'charts/fetchPredict',
     async (_, thunkAPI) => {
@@ -290,6 +339,17 @@ const chartsSlice = createSlice({
             }).addCase(fetchAlerts.rejected,(state,action)=>{
                 state.status="failed";
                 state.error=action.payload??"Failed to Fetch Alerts"
+            })
+            .addCase(fetchFinancialHealth.pending,(state)=>{
+                state.status='loading';
+            })
+            .addCase(fetchFinancialHealth.fulfilled,(state,action)=>{
+                state.status='succeeded';
+                state.financialHealth=action.payload??null;
+            })
+            .addCase(fetchFinancialHealth.rejected,(state,action)=>{
+                state.status="failed";
+                state.error=action.payload??"Failed to Fetch Financial Health"
             });
     },
 })

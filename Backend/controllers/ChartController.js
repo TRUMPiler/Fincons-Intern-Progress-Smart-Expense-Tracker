@@ -50,6 +50,17 @@ class ChartController {
             next(error);
         }
     }
+    async FinancialHealthReview(req,res,next)
+    {
+        try{
+            const data=await ChartService.getFinancialHealthScore(req.query.userId,req.query.month,req.query.year);
+            console.log(data);
+            return res.status(200).json(Response.success(data,"Financial Health Retrived",200));
+        }catch(error)
+        {
+            next(error);
+        }
+    }
 }
 
 export default new ChartController();

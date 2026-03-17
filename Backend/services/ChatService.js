@@ -4,9 +4,11 @@ import mongoose from "mongoose";
 import AiInteraction from "../ai/AiInteraction.js";
 import Transaction from "../models/Transaction.js";
 import ChartsService from "./ChartsService.js";
-
+import Budget from "../models/Budget.js";
 
 class ChatService {
+
+     
     async ChatIntialization(userId) {
         try {
             const userData = await user.findOne({ _id: userId });
@@ -42,7 +44,7 @@ class ChatService {
         console.log("invoked");
         try {
             const chatData = await Chat.find({ userId: new mongoose.Types.ObjectId(userId) }).sort({ createdAt: 1 });
-            
+
             return chatData ?? [];
         } catch (error) {
             console.log(error);
@@ -61,7 +63,7 @@ class ChatService {
 
             const userObjId = new mongoose.Types.ObjectId(userId);
 
-        
+
             const userMessage = new Chat({
                 content: String(message),
                 role: "User",
@@ -79,9 +81,9 @@ class ChatService {
 
 
             const transactionsData = await ChartsService.CategorywiseSpendingChart(userId).catch(() => null);
-            const IncomeExpense=await ChartsService.IncomeExpense(userId).catch(()=>null);
+            const IncomeExpense = await ChartsService.IncomeExpense(userId).catch(() => null);
 
-            const aiReply = await AiInteraction.ChatComplete(conversationHistory, message, transactionsData,IncomeExpense);
+            const aiReply = await AiInteraction.ChatComplete(conversationHistory, message, transactionsData, IncomeExpense);
 
             const modelMessage = new Chat({
                 content: aiReply || `Hello ${userData.name}, I couldn't process that right now.`,
@@ -99,6 +101,7 @@ class ChatService {
             throw new Error(error);
         }
     }
+   
 
 }
 

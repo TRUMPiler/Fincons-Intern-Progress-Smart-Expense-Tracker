@@ -36,7 +36,8 @@ class UserController {
             }
             res.status(200).json(Response.success({ UserRegister }, "Registration Successfull", 200));
             (async () => {
-                const info = await mailer.sendMail({
+                // const info = await mailer.emails.send({
+                const info=await mailer.sendMail({
                     from: '"MoneyMint" <naisal036@gmail.com>',
                     to: req.body.email,
                     subject: "Welcome to MoneyMint 🎉",

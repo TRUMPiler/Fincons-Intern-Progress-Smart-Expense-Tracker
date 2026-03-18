@@ -63,15 +63,15 @@ const Navbar = () => {
             to={item.path}
             className={`relative text-sm font-medium transition ${
               location.pathname === item.path
-                ? "text-pink-900"
-                : "text-gray-600 dark:text-gray-300 hover:text-blue-500"
+                ? "text-black dark:text-indigo-400"
+                : "text-gray-900 dark:text-gray-300 hover:text-red-500"
             }`}
           >
             {item.name}
 
             {/* Active underline */}
             {location.pathname === item.path && (
-              <span className="absolute left-0 -bottom-1 w-full h-[2px] bg-blue-500 rounded"></span>
+              <span className="absolute left-0 -bottom-1 w-full h-[2px] bg-blue-900 rounded"></span>
             )}
           </Link>
         ))}

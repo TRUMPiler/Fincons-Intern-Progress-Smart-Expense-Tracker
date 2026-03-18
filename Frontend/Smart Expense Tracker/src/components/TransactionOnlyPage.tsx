@@ -1,6 +1,6 @@
 import { TrashIcon, Plus, DollarSign } from "lucide-react";
-import { Column, type ColumnEditorOptions } from "primereact/column";
-import { DataTable } from "primereact/datatable";
+import { Column, type ColumnEditorOptions, type ColumnFilterElementTemplateOptions } from "primereact/column";
+import { DataTable, type DataTableFilterMeta } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { useEffect, useRef, useState, type FC } from "react";
 import { Button } from "primereact/button";
@@ -10,6 +10,12 @@ import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 import api from "../lib/axiosInstance";
 import { Card } from "primereact/card";
+import { FilterMatchMode, FilterOperator } from "primereact/api";
+import { InputNumber, type InputNumberChangeEvent } from "primereact/inputnumber";
+import { Calendar } from "primereact/calendar";
+import { IconField } from "primereact/iconfield";
+import { InputIcon } from "primereact/inputicon";
+import { MultiSelect, type MultiSelectChangeEvent } from "primereact/multiselect";
 type CategoryProp = {
     name: string;
     _id: string;
@@ -25,6 +31,21 @@ type TranscationType = {
     isDelete?: boolean;
 };
 
+const defaultFilters: DataTableFilterMeta = {
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+  amount: { value: null, matchMode: FilterMatchMode.BETWEEN },
+  description: {
+    operator: FilterOperator.AND,
+    constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
+  },
+  category: { value: null, matchMode: FilterMatchMode.IN },
+  type: {
+    operator: FilterOperator.OR,
+    constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+  },
+  date: { value: null, matchMode: FilterMatchMode.BETWEEN },
+};
+
 const Transcation: FC = () => {
     const [addTranscationVisible, setAddTranscationVisible] = useState<boolean>(false);
 
@@ -35,6 +56,8 @@ const Transcation: FC = () => {
     const [transactionType, setTransactionType] = useState<"income" | "expense" | "">("");
     const [dateVal, setDateVal] = useState<string>(new Date().toISOString().slice(0, 10));
     const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+    const [filters, setFilters] = useState<DataTableFilterMeta>(defaultFilters);
+    const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
     const toLocalDatetimeInputValue = (date?: string | Date) => {
         const d = date ? new Date(date) : new Date();
         const pad = (n: number) => n.toString().padStart(2, '0');
@@ -72,6 +95,131 @@ const Transcation: FC = () => {
         const val = options.value ? toLocalDatetimeInputValue(options.value) : '';
         return <InputText type="datetime-local" value={val} onChange={(e: any) => options.editorCallback!(e.target.value)} min={getMinDatetimeLocal()} max={getMaxDatetimeLocal()} className="w-full" />;
     };
+
+    const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        let _filters = { ...filters };
+        // @ts-ignore
+        _filters['global'].value = value;
+        setFilters(_filters);
+        setGlobalFilterValue(value);
+    };
+
+    const initFilters = () => {
+        setFilters(defaultFilters);
+        setGlobalFilterValue('');
+    };
+
+    const clearFilter = () => {
+        initFilters();
+    };
+
+    const amountFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+        return (
+            <div className="flex flex-col gap-2 p-2">
+                <InputNumber 
+                    value={options.value?.[0]} 
+                    onChange={(e: InputNumberChangeEvent) => {
+                        const newValue = [e.value, options.value?.[1]];
+                        options.filterCallback(newValue, options.index);
+                    }} 
+                    placeholder="Min"
+                    className="w-full"
+                />
+                <InputNumber 
+                    value={options.value?.[1]} 
+                    onChange={(e: InputNumberChangeEvent) => {
+                        const newValue = [options.value?.[0], e.value];
+                        options.filterCallback(newValue, options.index);
+                    }} 
+                    placeholder="Max"
+                    className="w-full"
+                />
+            </div>
+        );
+    };
+
+    const categoryFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+        return (
+            <MultiSelect 
+                value={options.value} 
+                options={categoryOptions} 
+                onChange={(e: MultiSelectChangeEvent) => options.filterCallback(e.value)} 
+                optionLabel="label" 
+                optionValue="value" 
+                placeholder="Select Categories" 
+                className="p-column-filter w-full"
+            />
+        );
+    };
+
+    const typeFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+        return (
+            <Dropdown 
+                value={options.value} 
+                options={[{label:'Income', value:'income'}, {label:'Expense', value:'expense'}]} 
+                onChange={(e:any) => options.filterCallback(e.value, options.index)} 
+                optionLabel="label" 
+                optionValue="value" 
+                placeholder="Select Type" 
+                className="p-column-filter w-full"
+                showClear
+            />
+        );
+    };
+
+    const dateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+        return (
+            <div className="flex flex-col gap-2 p-2">
+                <Calendar 
+                    value={options.value?.[0]} 
+                    onChange={(e) => {
+                        const newValue = [e.value, options.value?.[1]];
+                        options.filterCallback(newValue, options.index);
+                    }} 
+                    dateFormat="mm/dd/yy" 
+                    placeholder="From" 
+                    mask="99/99/9999"
+                    className="w-full"
+                />
+                <Calendar 
+                    value={options.value?.[1]} 
+                    onChange={(e) => {
+                        const newValue = [options.value?.[0], e.value];
+                        options.filterCallback(newValue, options.index);
+                    }} 
+                    dateFormat="mm/dd/yy" 
+                    placeholder="To" 
+                    mask="99/99/9999"
+                    className="w-full"
+                />
+            </div>
+        );
+    };
+
+    const descriptionFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+        return (
+            <InputText 
+                value={options.value} 
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => options.filterCallback(e.target.value, options.index)} 
+                placeholder="Search description"
+                className="w-full"
+            />
+        );
+    };
+
+    const renderHeader = () => {
+        return (
+            <div className="flex justify-between items-center gap-2 flex-wrap">
+                <Button type="button" icon="pi pi-filter-slash" label="Clear Filters" outlined onClick={clearFilter} severity="secondary" />
+                <IconField iconPosition="left">
+                    <InputIcon className="pi pi-search" />
+                    <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Global Search" className="w-full" />
+                </IconField>
+            </div>
+        );
+    };
+
     const toast = useRef<Toast | null>(null);
 
     useEffect(() => {
@@ -423,6 +571,10 @@ const Transcation: FC = () => {
                     }
                     onRowEditComplete={onRowEditComplete}
                     responsiveLayout="scroll"
+                    filters={filters}
+                    globalFilterFields={['category.name', 'description', 'type']}
+                    header={renderHeader()}
+                    onFilter={(e) => setFilters(e.filters)}
                 >
                     <Column
                         field="amount"
@@ -431,6 +583,10 @@ const Transcation: FC = () => {
                         body={priceBodyTemplate}
                         style={{ width: '12%' }}
                         sortable
+                        filter
+                        filterElement={amountFilterTemplate}
+                        filterMenuStyle={{ width: '12rem' }}
+                        showFilterMatchModes={false}
                     />
                     <Column
                         field="category"
@@ -446,6 +602,11 @@ const Transcation: FC = () => {
                             }
                             return <span className="font-medium">{cat?.name ?? cat?._id ?? "-"}</span>;
                         }}
+                        filter
+                        filterElement={categoryFilterTemplate}
+                        filterField="category._id"
+                        filterMenuStyle={{ width: '14rem' }}
+                        showFilterMatchModes={false}
                     />
                     <Column
                         field="description"
@@ -453,6 +614,9 @@ const Transcation: FC = () => {
                         editor={textEditor}
                         style={{ width: '25%' }}
                         body={(row: any) => <span className="text-gray-700 dark:text-gray-300">{row.description || '-'}</span>}
+                        filter
+                        filterElement={descriptionFilterTemplate}
+                        filterMenuStyle={{ width: '12rem' }}
                     />
                     <Column
                         field="type"
@@ -468,6 +632,10 @@ const Transcation: FC = () => {
                                 {row.type === "income" ? "💰 Income" : "💸 Expense"}
                             </span>
                         )}
+                        filter
+                        filterElement={typeFilterTemplate}
+                        filterMenuStyle={{ width: '12rem' }}
+                        showFilterMatchModes={false}
                     />
                     <Column
                         field="date"
@@ -477,10 +645,14 @@ const Transcation: FC = () => {
                         style={{ width: '15%' }}
                         body={(row: TranscationType) => (
                             <span className="flex items-center gap-2">
-                                {/* <Calendar className="w-4 h-4 text-gray-500" /> */}
                                 {row.date ? new Date(row.date).toLocaleString() : "-"}
                             </span>
                         )}
+                        filter
+                        filterElement={dateFilterTemplate}
+                        dataType="date"
+                        filterMenuStyle={{ width: '12rem' }}
+                        showFilterMatchModes={false}
                     />
                     <Column
                         rowEditor

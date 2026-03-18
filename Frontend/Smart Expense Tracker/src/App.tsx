@@ -8,7 +8,7 @@ import { NotFound } from './pages/NotFound'
 import LoadingAnimation from './assets/Material wave loading.gif'
 import { createContext, Suspense, useState } from 'react'
 import VerifyUser from './pages/verify'
-import { SidebarProvider, SidebarTrigger } from './components/ui/sidebar'
+import { SidebarProvider, SidebarTrigger, useSidebar } from './components/ui/sidebar'
 import { PanelLeftOpen } from 'lucide-react'
 import SidebarExample, { type SideBarContextProps } from './components/sideBar'
 import Budget from './components/Budget'
@@ -19,6 +19,24 @@ import Chat from './pages/Chat'
 import { DashboardContext } from './store/slices/chartsSlice'
 
 export const SideBarContext = createContext<any>(null);
+
+function MobileSidebarTrigger() {
+  const { open, isMobile, openMobile } = useSidebar();
+
+  // On mobile the sidebar uses `openMobile`; on desktop it uses `open`.
+  const visible = isMobile ? !openMobile : !open;
+  if (!visible) return null;
+
+  return (
+    <div className="md:hidden fixed top-0 left-4 z-60 pt-2">
+      <SidebarTrigger asChild>
+        <button className="rounded-lg transition hover:scale-105" aria-label="Open sidebar">
+          <PanelLeftOpen className="text-black dark:text-white" size={24} />
+        </button>
+      </SidebarTrigger>
+    </div>
+  );
+}
 
 function App() {
   const [open, SetOpen] = useState<boolean>(false);
@@ -44,15 +62,7 @@ function App() {
             <SidebarExample />
 
             {/* ✅ Mobile Sidebar Trigger */}
-            {!value.open && (
-              <div className="md:hidden fixed top-0 left-4 z-60 bg-black w-full">
-                <SidebarTrigger asChild>
-                  <button className=" rounded-lg bg-white mt-4 dark:bg-black backdrop-blur-md shadow-md transition hover:scale-105">
-                    <PanelLeftOpen className="text-black dark:text-white" />
-                  </button>
-                </SidebarTrigger>
-              </div>
-            )}
+            <MobileSidebarTrigger />
 
             {/* Main Content */}
             <main className="w-full">

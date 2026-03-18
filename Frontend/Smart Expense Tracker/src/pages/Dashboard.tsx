@@ -60,6 +60,8 @@ const DashboardL: FC = () => {
     const [loadCharts,setLoadCharts]=useState<boolean>(false);
     const [chartOptions, setChartOptions] = useState<any | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
+    const [minLoadingTimeReached, setMinLoadingTimeReached] = useState<boolean>(false);
+    const [dataLoaded, setDataLoaded] = useState<boolean>(false);
     const [predictExpense, setPredictExpense] = useState<number | string | null>(0);
     const [categoryOptions, setCategoryOptions] = useState<Array<{ label: string; value: string }>>([]);
     const [chartBarData, setChartBarData] = useState({});
@@ -82,8 +84,8 @@ const DashboardL: FC = () => {
         expense:0,
         savings:0
     }});
-    const [dashboardView,setDashboardView]=useState<"Overview"|"Budget Meters">("Overview");
-    const options=["Overview","Budget Meters"];
+    const [dashboardView,setDashboardView]=useState<"Financial Overview"|"Budget Overview"|"Transcations">("Financial Overview");
+    const options=["Financial Overview","Budget Overview","Transcations"];
     const [currentAlertIndex, setCurrentAlertIndex] = useState<number | null>(null);
     const dispatch = useAppDispatch();
     let acceptRef=useRef<string>('');
@@ -318,8 +320,24 @@ const DashboardL: FC = () => {
         setChartOptions(doughnutOptions)
 
         setPredictExpense(charts.predictExpense ?? null)
-        setLoading(false)
+        setDataLoaded(true)
     }, [charts])
+
+    // Enforce minimum 3-second loading time
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setMinLoadingTimeReached(true);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Set loading to false only when both conditions are met
+    useEffect(() => {
+        if (dataLoaded && minLoadingTimeReached) {
+            setLoading(false);
+        }
+    }, [dataLoaded, minLoadingTimeReached]);
 
     useEffect(() => {
         if (charts.availableMonths && charts.availableMonths.length > 0 && !isInitialized) {
@@ -368,7 +386,7 @@ const DashboardL: FC = () => {
             charts.Alerts !== undefined;
         
         if (allDataLoaded) {
-            setLoading(false);
+            setDataLoaded(true);
         }
         setLoadCharts(false);
     }, [charts.financialHealth, charts.categorySpending, charts.totals, charts.monthlyTrend, charts.Alerts]);
@@ -404,7 +422,7 @@ const DashboardL: FC = () => {
                     <ProgressBar value={100} showValue={false} style={{ height: '4px' }} className="bg-indigo-500" />
                 </div>
             )}
-            <div className={`w-full max-w-7xl  mt-3 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
+            <div className={`w-full max-w-7xl  mt-7 transition-all duration-300 ${loading ? 'opacity-60 pointer-events-none blur-sm' : 'opacity-100'}`}>
                 
                 <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
                          <div>
@@ -482,44 +500,49 @@ const DashboardL: FC = () => {
                         <p className="text-sm text-gray-600 dark:text-gray-300">No transactions available for the selected month. Please choose another month or year.</p>
                     </Card>
                 </div>
-            ) : (dashboardView==="Overview"?(<>
-            
-               <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading}  predictExpense={predictExpense} />
-
-                <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions} breakdown={fiananceHealth.breakdown} summary={fiananceHealth.summary}/>
-                
-               <CategorySpending loading={loading} chartBarData={chartBarData} chartBarOptions={chartBarOptions} categoryOptions={categoryOptions} chartMonthlyData={chartMonthlyData} chartMonthlyOptions={chartMonthlyOptions} transcations={transcations} setTranscation={setTranscations} />
-
-               <Card className="p-4 shadow rounded-lg dark:border dark:border-white mt-4">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2 dark:text-white">Recent Transactions</h3>
-                    {recentTransactions.length === 0 ? (
-                        <p className="text-sm text-gray-500">No recent transactions</p>
-                    ) : (
-                        <div className="divide-y">
-                            {recentTransactions.map((t) => (
-                                <div key={t._id} className="flex items-center justify-between py-2">
-                                    <div>
-                                        <div className="text-sm font-medium">{t.description ?? t.category?.name ?? 'No description'}</div>
-                                        <div className="text-xs text-gray-500">{t.date ? new Date(t.date).toLocaleDateString() : ''}</div>
-                                    </div>
-                                    <div className={t.type === 'expense' ? 'text-red-500 font-semibold' : 'text-green-500 font-semibold'}>
-                                        {t.amount ? t.amount.toLocaleString('en-US', { style: 'currency', currency: 'INR' }) : ''}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </Card>
-               </>
-               ):(
+            ) : dashboardView === "Financial Overview" ? (
                 <>
-               <BudgetMeters loading={loading} charts={charts} chartData={chartData}/>
+                    <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading}  predictExpense={predictExpense} />
+
+                    <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions} breakdown={fiananceHealth.breakdown} summary={fiananceHealth.summary}/>
+                    
+                    <CategorySpending loading={loading} chartBarData={chartBarData} chartBarOptions={chartBarOptions} categoryOptions={categoryOptions} chartMonthlyData={chartMonthlyData} chartMonthlyOptions={chartMonthlyOptions} transcations={transcations} setTranscation={setTranscations} />
+
+                    <Card className="p-4 shadow rounded-lg dark:border dark:border-white mt-4">
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2 dark:text-white">Recent Transactions</h3>
+                        {recentTransactions.length === 0 ? (
+                            <p className="text-sm text-gray-500">No recent transactions</p>
+                        ) : (
+                            <div className="divide-y">
+                                {recentTransactions.map((t) => (
+                                    <div key={t._id} className="flex items-center justify-between py-2">
+                                        <div>
+                                            <div className="text-sm font-medium">{t.description ?? t.category?.name ?? 'No description'}</div>
+                                            <div className="text-xs text-gray-500">{t.date ? new Date(t.date).toLocaleDateString() : ''}</div>
+                                        </div>
+                                        <div className={t.type === 'expense' ? 'text-red-500 font-semibold' : 'text-green-500 font-semibold'}>
+                                            {t.amount ? t.amount.toLocaleString('en-US', { style: 'currency', currency: 'INR' }) : ''}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
+                </>
+            ) : dashboardView == "Budget Overview" ? (
+                <>
+                    <BudgetMeters loading={loading} charts={charts} chartData={chartData}/>
+                    {/* <Card className="p-4 shadow rounded-lg dark:border dark:border-white">
+                        <h3 className="text-lg font-semibold text-gray-700 mb-4 dark:text-white">Transactions</h3>
+                        <Transcation transcations={transcations} setTranscations={setTranscations} />
+                    </Card> */}
+                </>
+            ) : (
                 <Card className="p-4 shadow rounded-lg dark:border dark:border-white">
                     <h3 className="text-lg font-semibold text-gray-700 mb-4 dark:text-white">Transactions</h3>
                     <Transcation transcations={transcations} setTranscations={setTranscations} />
                 </Card>
-                </>
-                ))}
+            )}
             </div>
         </div>
     );

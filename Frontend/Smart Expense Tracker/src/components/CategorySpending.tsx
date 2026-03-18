@@ -41,6 +41,7 @@ const CategorySpending=({loading,chartBarData,chartBarOptions,chartMonthlyData,c
                                     <div className="text-gray-500 dark:text-white">Loading chart...</div>
                                 ) : chartMonthlyData ? (
                                     <div className="w-[60vh] h-15rem px-4">
+                                        
                                         <Chart type="line" data={chartMonthlyData} options={chartMonthlyOptions} />
                                     </div>
                                 ) : (

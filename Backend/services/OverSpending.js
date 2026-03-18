@@ -11,6 +11,7 @@ import mongoose from "mongoose";
  */
 export const checkOverspending = async (userId, categoryId, transcationId) => {
   try {
+    console.log(transcationId);
     const transcation = await Transaction.findById(transcationId);
     if (!transcation) {
       console.warn("checkOverspending: transaction not found", transcationId);
@@ -25,7 +26,7 @@ export const checkOverspending = async (userId, categoryId, transcationId) => {
     }
 
     const now = new Date();
-
+    console.log("Helofubfyew",txDate.getMonth,now.getMonth());
     // If the transaction's month/year is not the current month/year, skip checking
     if (txDate.getMonth() !== now.getMonth() || txDate.getFullYear() !== now.getFullYear()) {
       return;

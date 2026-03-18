@@ -11,6 +11,7 @@ import { Toast } from "primereact/toast";
 import { confirmDialog, ConfirmDialog } from "primereact/confirmdialog";
 import { Button } from "primereact/button";
 import { Dropdown } from 'primereact/dropdown';
+import { ProgressSpinner } from "primereact/progressspinner";
 import SummaryCard from "../components/SummaryCard";
 import IncomeExpense from "../components/IncomeExpense";
 import CategorySpending from "../components/CategorySpending";
@@ -175,7 +176,7 @@ const DashboardL: FC = () => {
         dispatch(fetchMonthlyTrend({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchCategorySpending({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchTotals({ month: useDashboard.month, year: useDashboard.year }))
-    }, [transcations, dispatch, useDashboard.month, useDashboard.year])
+    }, [transcations,dispatch, useDashboard.month, useDashboard.year])
 
 
     useEffect(() => {
@@ -383,6 +384,14 @@ const DashboardL: FC = () => {
        
         <div className="flex flex-col items-center w-full min-h-screen gap-6 py-8 px-4 bg-gray-200  dark:bg-none dark:bg-black ">
          <Toast ref={toast}/>
+            {!isInitialized && (
+                <div className="fixed inset-0 bg-white/80 dark:bg-black/80 flex items-center justify-center z-50">
+                    <div className="flex flex-col items-center gap-4">
+                        <ProgressSpinner strokeWidth="4" fill="var(--surface-card)" animationDuration=".5s" />
+                        <p className="text-gray-700 dark:text-gray-300 font-medium">Initializing Dashboard...</p>
+                    </div>
+                </div>
+            )}
             {loading && (
                 <div className="w-full max-w-7xl fixed top-0 left-0 right-0 z-50">
                     <ProgressBar value={100} showValue={false} style={{ height: '4px' }} className="bg-indigo-500" />
@@ -459,7 +468,7 @@ const DashboardL: FC = () => {
             />
                
                 </div>
-            {transcations.length === 0 && !loading ? (
+            {transcations.length === 0 && (!loading||!isInitialized) ? (
                 <div className="w-full flex items-center justify-center py-16">
                     <Card className="p-8 shadow rounded-lg text-center max-w-md dark:border dark:border-white">
                         <h3 className="text-xl font-semibold text-gray-700 mb-2 dark:text-white">No Data Available</h3>

@@ -1,4 +1,4 @@
-import { TrashIcon, Plus, Calendar, DollarSign } from "lucide-react";
+import { TrashIcon, Plus,  DollarSign } from "lucide-react";
 import { Column, type ColumnEditorOptions } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
@@ -36,6 +36,17 @@ const Transcation:FC=()=>
             const [transactionType, setTransactionType] = useState<"income" | "expense" | "">("");
             const [dateVal, setDateVal] = useState<string>(new Date().toISOString().slice(0,10));
             const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+               const toLocalDatetimeInputValue = (date?: string | Date) => {
+        const d = date ? new Date(date) : new Date();
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+    const getMaxDatetimeLocal = () => toLocalDatetimeInputValue();
+    const getMinDatetimeLocal = () => {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 2);
+        return toLocalDatetimeInputValue(d);
+    };
             const [yearOptions, setYearOptions] = useState<Array<{ label: string; value: number }>>([]);
         const [categoryOptions, setCategoryOptions] = useState<Array<{ label: string; value: string }>>([]);
         const [transactions,setTranscation]=useState<TranscationType[]>([]);
@@ -59,8 +70,8 @@ const Transcation:FC=()=>
     );
 
     const dateEditor = (options: ColumnEditorOptions) => {
-        const val = options.value ? new Date(options.value).toISOString().slice(0,10) : '';
-        return <InputText type="date" value={val} onChange={(e: any) => options.editorCallback!(e.target.value)} className="w-full" />;
+      const val = options.value ? toLocalDatetimeInputValue(options.value) : '';
+        return <InputText type="datetime-local" value={val} onChange={(e: any) => options.editorCallback!(e.target.value)} min={getMinDatetimeLocal()} max={getMaxDatetimeLocal()} className="w-full" />;
     };
     const toast = useRef<Toast | null>(null);
     
@@ -358,15 +369,11 @@ const Transcation:FC=()=>
                         />
                     </div>
 
-                    <FloatLabel className="w-full">
-                        <InputText 
-                            type="date" 
-                            value={dateVal} 
-                            onChange={(e: any) => setDateVal(e.target.value)} 
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                        <label className="text-gray-700 dark:text-gray-300">Date</label>
-                    </FloatLabel>
+                          <FloatLabel className="w-full">
+                            <InputText type="datetime-local" value={dateVal} onChange={(e:any)=>setDateVal(e.target.value)} min={getMinDatetimeLocal()} max={getMaxDatetimeLocal()} className="w-full" />
+                            <label>Date & Time</label>
+                        </FloatLabel>
+
 
                     <div className="flex justify-end gap-3 pt-4">
                         <Button 
@@ -465,8 +472,8 @@ const Transcation:FC=()=>
                         style={{ width: '15%' }}
                         body={(row: TranscationType) => (
                             <span className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-gray-500" />
-                                {row.date ? new Date(row.date).toLocaleDateString() : "-"}
+                                {/* <Calendar className="w-4 h-4 text-gray-500" /> */}
+                                {row.date ? new Date(row.date).toLocaleString() : "-"}
                             </span>
                         )} 
                     />

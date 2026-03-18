@@ -20,7 +20,7 @@ import {
   LogOut,
 } from "lucide-react"
 
-import { createContext, useContext, useRef, type Dispatch, type SetStateAction } from "react"
+import { createContext, useContext, useEffect, useRef, type Dispatch, type SetStateAction } from "react"
 import { NavLink } from "react-router"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import authService from "../lib/authService";
@@ -36,7 +36,22 @@ export const SideBarContext = createContext<SideBarContextProps | null>(null);
 export default function SidebarExample() {
   const toast = useRef<Toast | null>(null);
   const SideBarcontext = useContext(SideBarContext);
-  
+    useEffect(()=>{
+      if(!localStorage.getItem("user"))
+        {
+          sessionStorage.clear();
+        }
+
+        if(!sessionStorage.getItem("id")&&localStorage.getItem("id"))
+        {
+          const id=localStorage.getItem("id")?.toString();
+          sessionStorage.setItem("id",id??"");
+          const email=localStorage.getItem("email")?.toString();
+          sessionStorage.setItem("email",email??"");
+          const name=localStorage.getItem("name")?.toString();
+          sessionStorage.setItem("name",name??"");
+        }
+    },[])
   return (
     
     <Sidebar variant="sidebar" collapsible="offcanvas">

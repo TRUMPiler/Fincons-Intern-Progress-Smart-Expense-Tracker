@@ -77,9 +77,9 @@ class TransactionService {
             });
             await newTransaction.save();
 
-            // create an audit/log entry
+      
             try {
-                await checkOverspending(userId, newTransaction.category);
+                await checkOverspending(userId, newTransaction.category,newTransaction._id);
                 const action = `User ${userId} added transaction ₹${newTransaction.amount} (${category.name})`;
                 await LogService.CreateLog(userId, action, {
                     transactionId: newTransaction._id,

@@ -269,7 +269,7 @@ const Budget: FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-screen gap-6 py-8 px-4 bg-gray-100 dark:bg-black">
+    <div className="flex flex-col  items-center w-full min-h-screen gap-6 py-8 px-4 bg-gray-100 dark:bg-black">
       <Toast ref={toast} />
          
       {/* Create Budget Dialog */}
@@ -387,7 +387,7 @@ const Budget: FC = () => {
       </Dialog>
 
       {/* Main Content */}
-      <div className="w-full max-w-7xl">
+      <div className="w-full max-w-7xl mt-7">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>

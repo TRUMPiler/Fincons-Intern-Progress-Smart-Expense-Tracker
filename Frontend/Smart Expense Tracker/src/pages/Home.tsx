@@ -10,7 +10,7 @@ const Home: FC = () => {
 
       {/* Navbar */}
       <div className="flex justify-between items-center px-8 py-5">
-        <h1 className="text-2xl font-bold mt-7">Money Mint</h1>
+        {/* <h1 className="text-2xl font-bold mt-7">Money Mint</h1> */}
 {(!sessionStorage.getItem("id")&&
         <div className="flex gap-6 text-lg">
           <button onClick={() => navigate("/login")}>Login</button>

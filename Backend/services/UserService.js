@@ -5,15 +5,15 @@ class UserService {
 
     async createUser(user) {
         try {
-            // const FindUser=UserSchema.findOne({email:user.email});
-
-            // if(FindUser)
-            // {
-            //     throw new Error("User Already Exists",{statusCode:401});
-            // }
+            // Check if user already exists
+            const existingUser = await UserSchema.findOne({ email: user.email });
+            if (existingUser) {
+                const error = new Error("User with this email already exists");
+                error.statusCode = 409; // Conflict
+                throw error;
+            }
             const saveUser = new UserSchema(user);
             await saveUser.save();
-            console.log(saveUser.password);
             return saveUser;
         } catch (err) {
             throw err;

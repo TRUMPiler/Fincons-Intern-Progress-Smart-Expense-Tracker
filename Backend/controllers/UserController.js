@@ -5,34 +5,55 @@ import Token from "../authentication/JWTauthentication.js";
 
 class UserController {
     async Login(req, res, next) {
-        const UserLogin = await UserService.LoginUser(req.body.email, req.body.password);
+        try {
+            const { email, password } = req.body;
+            
+            // Validate inputs
+            if (!email || !password) {
+                return res.status(400).json(Response.error("Email and password are required", 400));
+            }
+            
+            const UserLogin = await UserService.LoginUser(email, password);
 
-        if (!UserLogin) {
-            console.log(UserLogin);
-            return res.status(404).json(Response.error("Data is Not Found", 404));
+            if (!UserLogin) {
+                return res.status(401).json(Response.error("Invalid email or password", 401));
+            }
+            
+            const accessToken = Token.createAccessToken(UserLogin._id, UserLogin.email, UserLogin.isVerified, req.ip);
+            const refreshToken = Token.createRefreshToken(UserLogin._id);
+            
+
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production', 
+                sameSite: 'lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                path: '/'
+            });
+            
+
+            res.status(200).json(Response.success({ user: { _id: UserLogin._id, email: UserLogin.email, name: UserLogin.name }, accessToken }, "User Login Success", 200));
+        } catch (error) {
+            next(error);
         }
-        console.log(UserLogin);
-        const accessToken = Token.createAccessToken(UserLogin._id, UserLogin.email, UserLogin.isVerified, req.ip);
-        const refreshToken = Token.createRefreshToken(UserLogin._id);
-        
-
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-            path: '/'
-        });
-        
-
-        res.status(200).json(Response.success({ user: { _id: UserLogin._id, email: UserLogin.email, name: UserLogin.name }, accessToken }, "User Login Success", 200));
     }
 
     async Register(req, res, next) {
         try {
+            const { name, email, password } = req.body;
+            
+            // Validate inputs
+            if (!name || !email || !password) {
+                return res.status(400).json(Response.error("Name, email, and password are required", 400));
+            }
+            
+            if (password.length < 6) {
+                return res.status(400).json(Response.error("Password must be at least 6 characters", 400));
+            }
+            
             const UserRegister = await UserService.createUser(req.body);
            
-            res.status(200).json(Response.success({ UserRegister }, "Registration Successfull", 200));
+            res.status(201).json(Response.success({ UserRegister }, "Registration Successful", 201));
             (async () => {
                 const info = await mailer.emails.send({
                 // const info=await mailer.sendMail({
@@ -84,6 +105,20 @@ class UserController {
             })();
         }
         catch (error) {
+            // Handle duplicate key errors (E11000)
+            if (error.code === 11000) {
+                const field = Object.keys(error.keyPattern)[0]; // Get the field that caused the error
+                let message = "This email is already registered";
+                if (field === "email") {
+                    message = "An account with this email already exists";
+                }
+                return res.status(409).json(Response.error(message, 409));
+            }
+            
+            if (error.statusCode === 409) {
+                return res.status(409).json(Response.error(error.message, 409));
+            }
+            
             next(error);
         }
     }

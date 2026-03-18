@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import { DBconfig } from "./config/config.js";
 import cookieParser from "cookie-parser";
 import { Resend } from "resend";
@@ -48,6 +49,18 @@ app.use(Error);
 (async function start() {
     try {
         await db.connect();
+        
+        // Drop the old name_1 index if it exists
+        try {
+            await mongoose.connection.collection('users').dropIndex('name_1');
+            console.log("✓ Dropped old 'name_1' index from users collection");
+        } catch (err) {
+            // Index doesn't exist, that's fine
+            if (!err.message.includes("index not found")) {
+                console.log("✓ name_1 index doesn't exist (already dropped)");
+            }
+        }
+        
         await CategoryService.ensureDefaultCategories();
         app.listen(Port, async () => {
             console.log("Server is listening at http://localhost:" + Port);

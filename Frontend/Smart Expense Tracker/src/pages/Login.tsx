@@ -52,56 +52,49 @@ export default function Login() {
 				"Accept": "application/JSON",
 			}
 		}).then((response: any) => {
-			console.log("🔐 Login Response:", response);
-
 			if (response.status == 200) {
-				console.log("📦 Response Data:", response.data);
-				console.log("📦 Response Data.data:", response.data.data);
-				
 				const { user, accessToken } = response.data.data;
 				
-				console.log("👤 User:", user);
-				console.log("🔑 AccessToken:", accessToken ? "EXISTS ✓" : "MISSING ✗");
-				console.log("🔄 RefreshToken: Stored in HTTP-only cookie ✓ (secure)");
-				
-				// if (!user.isVerified) {
-				// 	console.log("Verification Pending");
-				// 	toast.current?.show({ severity: "info", summary: "Pending Verification", detail: "You're Verification is pending please Complete" });
-				// 	setMessage(`Please Verify you're email to continue`);
-				// 	return;
-				// }
-				
-				console.log("💾 Storing user data via authService.setUser()...");
 				authService.setUser(user, accessToken);
-				console.log("✅ Stored! Checking localStorage...");
-				console.log("📍 localStorage.accessToken:", localStorage.getItem("accessToken") ? "EXISTS ✓" : "MISSING ✗");
-				console.log("📍 localStorage.user:", localStorage.getItem("user") ? "EXISTS ✓" : "MISSING ✗");
 				
-			
 				sessionStorage.setItem("jwtToken", accessToken);
 				sessionStorage.setItem("id", user._id);
 				sessionStorage.setItem("name", user.name);
 				sessionStorage.setItem("email", user.email);
 				
 				toast.current?.show({ severity: "success", summary: "Login Success", detail: "Welcome "+user.name });
+				setMessage(`Logged in as ${form.email}`);
+				setLoading(false);
 				setTimeout(()=>{
 					window.location.href="/";
-				},3000);
+				},2000);
+			}
+		}).catch((error: any)=>{
+			console.error("Login Error:", error.response?.data || error.message);
+			const errorMessage = error.response?.data?.message || "Invalid email or password";
+			const statusCode = error.response?.status;
 			
-				setMessage(`Logged in as ${form.email}`);
+			let toastMessage = "Login Failed";
+			let toastDetail = errorMessage;
+			
+			if (statusCode === 401) {
+				toastMessage = "Invalid Credentials";
+				toastDetail = "Email or password is incorrect";
+			} else if (statusCode === 400) {
+				toastMessage = "Invalid Input";
+				toastDetail = errorMessage;
+			} else if (statusCode === 404) {
+				toastMessage = "User Not Found";
+				toastDetail = "No account found with this email";
+			} else {
+				toastMessage = "Server Error";
+				toastDetail = "There was an issue on our end";
 			}
-		}).catch((error)=>{
-			if(error)
-			{
-				console.error(error);
-				toast.current?.show({severity:"error",summary:"Login Failed",detail:"Sorry seems like there is a issue at our side"});
-			}
+			
+			toast.current?.show({severity:"error", summary: toastMessage, detail: toastDetail});
+			setLoading(false);
 		})
 		setMessage(null);
-		setTimeout(() => {
-			setLoading(false);
-			
-		}, 1000);
 	};
 
 	return (

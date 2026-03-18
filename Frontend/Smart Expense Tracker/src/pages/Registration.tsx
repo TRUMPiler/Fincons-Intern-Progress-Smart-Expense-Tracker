@@ -50,38 +50,61 @@ export default function Registration() {
 			setErrors(newErrors);
 			return;
 		}
+		
+		setLoading(true);
         api.post("/api/user/register", { name: form.name, email: form.email, password: form.password }, { headers: {
             Accept: "application/json"
         } }).then((response) => {
-            console.log(response);
-            toast.current?.show({severity:"success",detail:"Registeration Success",summary:"You're Registration was a success\n Please wait for Verification Email"});
+            if (response.status === 201 || response.status === 200) {
+                toast.current?.show({
+                    severity:"success",
+                    summary:"Registration Successful",
+                    detail:"Your account has been created. Check your email to verify."
+                });
+                setMessage(`Account created for ${form.email}. Redirecting to login...`);
+                setTimeout(() => {
+                    window.location.href = "/login";
+                }, 2000);
+            }
         })
-        .catch((error)=>{
-            console.log(error);
+        .catch((error: any)=>{
+            console.error("Registration Error:", error.response?.data || error.message);
+            const errorMessage = error.response?.data?.message || "Registration failed";
+            const statusCode = error.response?.status;
             
-            toast.current?.show({severity:"error",detail:"Server Error",summary:"Issues with server"});
-            return;
+            let toastMessage = "Registration Failed";
+            let toastDetail = errorMessage;
+            
+            if (statusCode === 409) {
+                toastMessage = "Email Already Exists";
+                toastDetail = "An account with this email already exists. Please log in instead.";
+            } else if (statusCode === 400) {
+                toastMessage = "Invalid Input";
+                toastDetail = errorMessage;
+            } else if (statusCode === 500) {
+                toastMessage = "Server Error";
+                toastDetail = "There was an issue on our end. Please try again later.";
+            } else {
+                toastMessage = "Registration Error";
+                toastDetail = errorMessage || "Something went wrong. Please try again.";
+            }
+            
+            toast.current?.show({severity:"error", summary: toastMessage, detail: toastDetail});
+            setLoading(false);
         })
-		setLoading(true);
-		setMessage(null);
-		setTimeout(() => {
-			setLoading(false);
-			setMessage(`Account created for ${form.email}`);
-			setForm({ name: '', email: '', password: '' });
-		}, 900);
 	};
 
 	return (
-		<div className="flex items-center justify-center min-h-screen bg-[#f4f6fb] p-7">
+		<div className="flex items-center justify-center min-h-screen dark:bg-black  bg-[#f4f6fb] p-7">
             <Toast ref={toast}/>
 			<form
-				className="min-w-[40vh] lg:min-w-[60vh] p-6 rounded-lg bg-white shadow-lg"
+				className="min-w-[40vh] lg:min-w-[60vh] p-6 rounded-lg dark:bg-black dark:border dark:border-white bg-white shadow-lg"
 				onSubmit={handleSubmit}
 				aria-label="registration-form"
 			>
-				<h2 className="text-xl font-semibold text-slate-900 mb-3">Create an account</h2>
+				<h2 className="text-xl font-semibold dark:text-white  text-slate-900 mb-3">Create an account</h2>
 
-				<label className="block text-sm text-slate-700 mt-3" htmlFor="name">Name</label>
+				<label className="block text-sm dark:text-white text-slate-700 mt-3" htmlFor="name">Name</label>
 				<input
 					id="name"
 					name="name"
@@ -89,14 +112,14 @@ export default function Registration() {
 					autoComplete="name"
 					value={form.name}
 					onChange={handleChange}
-					className="w-full px-3 py-2.5 mt-1 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+					className="w-full px-3 py-2.5 mt-1 rounded-md border  border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
 					placeholder="Your full name"
 			
 				/>
 
 				{errors.name && <div className="text-red-600 text-xs mt-2">{errors.name}</div>}
 
-				<label className="block text-sm text-slate-700 mt-3" htmlFor="email">Email</label>
+				<label className="block text-sm dark:text-white text-slate-700 mt-3" htmlFor="email">Email</label>
 				<input
 					id="email"
 					name="email"
@@ -104,13 +127,13 @@ export default function Registration() {
 					autoComplete="email"
 					value={form.email}
 					onChange={handleChange}
-					className="w-full px-3 py-2.5 mt-1 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+					className="w-full px-3 dark:text-white py-2.5 mt-1 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
 					placeholder="you@example.com"
 				
 				/>
 				{errors.email && <div className="text-red-600 text-xs mt-2">{errors.email}</div>}
 
-				<label className="block text-sm text-slate-700 mt-3" htmlFor="password">Password</label>
+				<label className="block text-sm dark:text-white text-slate-700 mt-3" htmlFor="password">Password</label>
 				<div className="relative">
 					{/* <input
 						id="password"
@@ -186,12 +209,12 @@ export default function Registration() {
 				</button>
 
 				{message ? (
-					<div className="text-sm text-green-600 mt-3 text-center">{message}</div>
+					<div className="text-sm dark:text-white text-green-600 mt-3 text-center">{message}</div>
 				) : (
-					<div className="text-sm text-slate-600 mt-3 text-center">Use a valid email and a password (min 6 chars)</div>
+					<div className="text-sm dark:text-white text-slate-600 mt-3 text-center">Use a valid email and a password (min 6 chars)</div>
 				)}
 
-				<div className="text-sm text-slate-600 mt-4 text-center">
+				<div className="text-sm dark:text-white text-slate-600 mt-4 text-center">
 					Already have an account? <a href="/login" className="text-indigo-600 font-medium">Log in</a>
 				</div>
 			</form>

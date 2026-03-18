@@ -258,8 +258,8 @@ const Transcation: FC = () => {
 
             {/* Header Section */}
             <div className="mb-8">
-                <div className="flex flex-col lg:flex-row items-center justify-between mb-2">
-                    <div className="flex items-center gap-3 mt-7 lg:mt-2">
+                <div className="flex flex-col lg:flex-row items-center justify-between  lg:mt-4 mb-2">
+                    <div className="flex items-center gap-3 mt-7">
                         <div className="bg-indigo-500 p-3 rounded-lg">
                             <DollarSign className="w-6 h-6 text-white" />
                         </div>

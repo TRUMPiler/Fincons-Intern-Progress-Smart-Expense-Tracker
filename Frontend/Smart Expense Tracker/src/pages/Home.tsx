@@ -11,17 +11,6 @@ const Home: FC = () => {
       {/* Navbar */}
       <div className="flex justify-between items-center px-8 py-5">
         {/* <h1 className="text-2xl font-bold mt-7">Money Mint</h1> */}
-{(!sessionStorage.getItem("id")&&
-        <div className="flex gap-6 text-lg">
-          <button onClick={() => navigate("/login")}>Login</button>
-          <button
-            onClick={() => navigate("/register")}
-            className="bg-white text-indigo-600 px-4 py-1 rounded-lg font-semibold"
-          >
-            Sign Up
-          </button>
-        </div>
-        )}
       </div>
 
       {/* Hero Section */}

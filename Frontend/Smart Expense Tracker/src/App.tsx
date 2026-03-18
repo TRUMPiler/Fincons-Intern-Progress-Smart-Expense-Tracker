@@ -45,9 +45,9 @@ function App() {
 
             {/* ✅ Mobile Sidebar Trigger */}
             {!value.open && (
-              <div className="md:hidden fixed top-4 left-4 z-50">
+              <div className="md:hidden fixed top-0 left-4 z-60 bg-black w-full">
                 <SidebarTrigger asChild>
-                  <button className="p-2 rounded-lg bg-white/80 dark:bg-black/80 backdrop-blur-md shadow-md transition hover:scale-105">
+                  <button className=" rounded-lg bg-white mt-4 dark:bg-black backdrop-blur-md shadow-md transition hover:scale-105">
                     <PanelLeftOpen className="text-black dark:text-white" />
                   </button>
                 </SidebarTrigger>

@@ -19,7 +19,7 @@ const calculateGridValues=(charts:any):number=>
 {
     if(charts.budget.length>1)
     {
-        if(charts.budget.length/2>3)
+        if((charts.budget.length/2)>3)
         {
             return 3;
         }
@@ -30,9 +30,9 @@ const calculateGridValues=(charts:any):number=>
     return (
         <>
             {Array.isArray(charts.budget) && charts.budget.length > 0 && (
-                <div className={`grid md:grid-cols-${calculateGridValues(charts)} grid-cols-1 gap-4 mb-4 md:min-w-[40vh] h-[50vh]  lg:h-[50vh] overflow-x-auto`}>
+                <div className={`grid md:grid-cols-${calculateGridValues(charts)} grid-cols-1 gap-4 mb-4 md:min-w-[40vh] h-[50vh]  lg:h-[68vh] overflow-x-auto dark:bg-gray-600`}>
                     {charts.budget.map((data: BudgetProp) => (
-                        <Card key={data._id ?? data.categoryId} className="p-1 shadow rounded-lg h-96 lg:h-[50vh] flex flex-col dark:border dark:border-white">
+                        <Card key={data._id ?? data.categoryId} className="p-1 shadow rounded-lg h-96 lg:h-fit flex flex-col dark:border dark:border-white">
                             <div className="flex items-center justify-center ">
                                 <h3 className="text-sm font-semibold text-gray-700 dark:text-white">Budget Meter for {data.categoryName}</h3>
 

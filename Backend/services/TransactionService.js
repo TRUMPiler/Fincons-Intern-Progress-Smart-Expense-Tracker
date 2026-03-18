@@ -7,6 +7,14 @@ import LogService from "./LogService.js";
 import { checkOverspending, checkBudgetExceeded } from "./OverSpending.js";
 import Alert from "../models/Alert.js";
 class TransactionService {
+    /**
+     * Retrieve all non-deleted transactions for a user within a specific month and year.
+     * @param {string} userid - The ID of the user
+     * @param {number|string} month - The month (1-12), or system uses current month if invalid
+     * @param {number|string} year - The year, or system uses current year if invalid
+     * @returns {Promise<Array>} Array of transaction objects with populated category data
+     * @throws {Error} If user not found or retrieval fails
+     */
     async GetTranscationBasedOnDate(userid, month, year) {
         try {
             if (!user.findById(userid)) throw new Error("User Not Found", { statusCode: 404 });
@@ -39,6 +47,13 @@ class TransactionService {
             throw err;
         }
     }
+    /**
+     * Retrieve all non-deleted transactions for a user for an entire year.
+     * @param {string} userId - The ID of the user
+     * @param {number|string} year - The year, or system uses current year if invalid
+     * @returns {Promise<Array>} Array of transaction objects with populated category data
+     * @throws {Error} If retrieval fails
+     */
     async GetTranscationAll(userId, year) {
         try {
             const yearNum = Number(year);
@@ -59,6 +74,15 @@ class TransactionService {
             throw error;
         }
     }
+    /**
+     * Create a new transaction for a user and trigger alert checks.
+     * Validates category ownership, checks for overspending patterns,
+     * checks for budget exceeded, and logs the transaction.
+     * @param {Object} transaction - Transaction object with category, amount, type, date, description
+     * @param {string} userId - The ID of the user creating the transaction
+     * @returns {Promise<Object>} The created transaction object with budget usage data
+     * @throws {Error} If category not found, invalid category, or creation fails
+     */
     async CreateTranscation(transaction, userId) {
         try {
 
@@ -124,55 +148,6 @@ class TransactionService {
             console.log("budget raw result:", result);
             console.log(spent);
 
-            // if ((spent / limit) * 100 > 99) {
-            //     const User = await user.findById(userId);
-            //     if (limit === 0) return;
-            //     if (User?.email) {
-            //         (async () => {
-            //             const info = await mailer.emails.send({
-            //                 from: '"MoneyMint" <fincons@moneymint.tech>',
-            //                 to: User.email,
-            //                 subject: "⚠️ Budget Alert from MoneyMint",
-            //                 text: `You have used more than 100% of your budget on ${category.name}.`,
-            //                 html: `
-            //     <div style="font-family: Arial, sans-serif; background-color:#f4f4f4; padding:20px;">
-            //         <div style="max-width:600px; margin:auto; background:white; padding:30px; border-radius:10px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-                        
-            //             <h2 style="color:#e74c3c;">⚠️ Budget Limit Alert</h2>
-
-            //             <p style="font-size:16px; color:#555;">
-            //                 Hello,
-            //             </p>
-
-            //             <p style="font-size:16px; color:#555;">
-            //                 You have spent more than <b>100% of your monthly budget</b> for ${category.name}.
-            //             </p>
-
-            //             <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px;">
-            //                 <p style="margin:5px; font-size:15px;"><b>Budget Limit:</b> ₹${limit}</p>
-            //                 <p style="margin:5px; font-size:15px;"><b>Amount Spent:</b> ₹${spent}</p>
-            //                 <p style="margin:5px; font-size:15px;"><b>Remaining:</b> ₹${remaining ?? 0}</p>
-            //             </div>
-
-            //             <p style="margin-top:20px; font-size:15px; color:#555;">
-            //                 Please review your spending to avoid exceeding your budget.
-            //             </p>
-
-            //             <hr style="margin:25px 0;">
-
-            //             <p style="font-size:12px; color:#aaa;">
-            //                 © ${new Date().getFullYear()} MoneyMint. Manage your money smarter 💰
-            //             </p>
-
-            //         </div>
-            //     </div>
-            //     `
-            //             });
-                        
-                    
-            //         })();
-            //     }
-            // }
 
             return newTransaction;
 
@@ -221,7 +196,10 @@ class TransactionService {
                     throw new Error("Invalid category selected");
                 }
             }
-
+            if(Number(updatedTransaction.amount)<=0)
+            {
+                throw new Error("Amount cannot be equal to or less than 0",{statusCode:400});
+            }
             const updated = await Transaction.findByIdAndUpdate(
                 transactionId,
                 updatedTransaction,
@@ -229,7 +207,7 @@ class TransactionService {
             );
 
             try {
-
+              
                 const categoryName = updated?.category?.name ?? updatedTransaction.category ?? null;
                 const action = `User ${userId} updated transaction ₹${updated?.amount ?? updatedTransaction.amount} (${categoryName})`;
                 await LogService.CreateLog(userId, action, {
@@ -249,7 +227,7 @@ class TransactionService {
                 if (!category.isDefault && category.userId?.toString() !== userId) {
                     throw new Error("Invalid category selected");
                 }
-                await checkOverspending(userId, updated.category, updated._id);
+                // await checkOverspending(userId, updated.category, updated._id);
 
             } catch (logErr) {
                 console.error("Failed to create transaction log", logErr);
@@ -286,59 +264,9 @@ class TransactionService {
             console.log(updated.date);
             console.log("budget raw result:", result);
             console.log(spent);
-
-            if ((spent / limit) * 100 > 80) {
-                const User = await user.findById(userId);
-
-                if (limit === 0) return;
-                if (updated.date.getMonth() != new Date().getMonth) {
-                    if (User?.email) {
-                        (async () => {
-                            const info = await mailer.emails.send({
-                                from: '"MoneyMint" <fincons@moneymint.tech>',
-                                to: User.email,
-                                subject: "⚠️ Budget Alert from MoneyMint",
-                                text: `You have used more than 100% of your budget on ${Category.name}.`,
-                                html: `
-                <div style="font-family: Arial, sans-serif; background-color:#f4f4f4; padding:20px;">
-                    <div style="max-width:600px; margin:auto; background:white; padding:30px; border-radius:10px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-                        
-                        <h2 style="color:#e74c3c;">⚠️ Budget Limit Alert</h2>
-
-                        <p style="font-size:16px; color:#555;">
-                            Hello,
-                        </p>
-
-                        <p style="font-size:16px; color:#555;">
-                            You have spent more than <b>100% of your monthly budget</b> for ${Category.name}.
-                        </p>
-
-                        <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px;">
-                            <p style="margin:5px; font-size:15px;"><b>Budget Limit:</b> ₹${limit}</p>
-                            <p style="margin:5px; font-size:15px;"><b>Amount Spent:</b> ₹${spent}</p>
-                            <p style="margin:5px; font-size:15px;"><b>Remaining:</b> ₹${remaining ?? 0}</p>
-                        </div>
-
-                        <p style="margin-top:20px; font-size:15px; color:#555;">
-                            Please review your spending to avoid exceeding your budget.
-                        </p>
-
-                        <hr style="margin:25px 0;">
-
-                        <p style="font-size:12px; color:#aaa;">
-                            © ${new Date().getFullYear()} MoneyMint. Manage your money smarter 💰
-                        </p>
-
-                    </div>
-                </div>
-                `
-                            });
-
-                            console.log("Budget alert email sent:", info.messageId);
-                        })();
-                    }
-                }
-            }
+            checkBudgetExceeded(userId,updated.category,transactionId);
+            checkOverspending(userId,updated.category,transactionId);
+           
             return updated;
 
         } catch (err) {

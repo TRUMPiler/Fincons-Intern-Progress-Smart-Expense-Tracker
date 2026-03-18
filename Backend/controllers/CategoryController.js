@@ -2,6 +2,14 @@ import CategoryService from "../services/CategoryService.js";
 import Response from "../utils/Response.js";
 
 class CategoryController {
+  /**
+   * Create a new expense category.
+   * @async
+   * @param {Object} req - Express request object with category data (name, userId) in body
+   * @param {Object} res - Express response object
+   * @param {Function} next - Express next middleware function
+   * @returns {void} JSON response with created category (201)
+   */
   async CreateCategory(req, res, next) {
     try {
       const created = await CategoryService.CreateCategory(req.body);
@@ -11,6 +19,14 @@ class CategoryController {
     }
   }
 
+  /**
+   * Update an existing category's name.
+   * @async
+   * @param {Object} req - Express request object with category id in params and new name in body
+   * @param {Object} res - Express response object
+   * @param {Function} next - Express next middleware function
+   * @returns {void} JSON response with updated category (200)
+   */
   async UpdateCategory(req, res, next) {
     try {
       const id = req.params.id;
@@ -22,6 +38,14 @@ class CategoryController {
     }
   }
 
+  /**
+   * Retrieve all categories (default and user-created) for a user.
+   * @async
+   * @param {Object} req - Express request object with userId in query
+   * @param {Object} res - Express response object
+   * @param {Function} next - Express next middleware function
+   * @returns {void} JSON response with categories array (200)
+   */
   async GetAllCategories(req, res, next) {
     try {
       const { userId } = req.query;

@@ -2,6 +2,14 @@ import BudgetService from "../services/BudgetService.js";
 import Response from "../utils/Response.js";
 
 class BudgetController {
+  /**
+   * Create a new budget for a user.
+   * @async
+   * @param {Object} req - Express request object with budget data in body and userId from auth
+   * @param {Object} res - Express response object
+   * @param {Function} next - Express next middleware function
+   * @returns {void} JSON response with created budget (201)
+   */
   async CreateBudget(req, res, next) {
     try {
       const userId = req.userId || req.body.userId;
@@ -11,6 +19,14 @@ class BudgetController {
       next(error);
     }
   }
+  /**
+   * Retrieve all unique month/year combinations for a user's budgets.
+   * @async
+   * @param {Object} req - Express request object with userId in params
+   * @param {Object} res - Express response object
+   * @param {Function} next - Express next middleware function
+   * @returns {void} JSON response with month/year array (200)
+   */
   async GetMonths(req,res,next)
   {
     try{
@@ -21,6 +37,14 @@ class BudgetController {
       next(exception);
     }
   }
+  /**
+   * Update an existing budget with new limit and settings.
+   * @async
+   * @param {Object} req - Express request object with budget id in params and updated data in body
+   * @param {Object} res - Express response object
+   * @param {Function} next - Express next middleware function
+   * @returns {void} JSON response with updated budget (200)
+   */
   async UpdateBudget(req, res, next) {
     try {
       const id = req.params.id;
@@ -31,6 +55,14 @@ class BudgetController {
     }
   }
 
+  /**
+   * Retrieve all budgets for a user in a specific month and year.
+   * @async
+   * @param {Object} req - Express request object with userId, month, year in query
+   * @param {Object} res - Express response object
+   * @param {Function} next - Express next middleware function
+   * @returns {void} JSON response with budgets array (200)
+   */
   async GetBudgets(req, res, next) {
     try {
       const userId = req.query.userId;
@@ -44,6 +76,14 @@ class BudgetController {
     }
   }
 
+  /**
+   * Retrieve a specific budget for a user's category.
+   * @async
+   * @param {Object} req - Express request object with userId, categoryId, month, year in query
+   * @param {Object} res - Express response object
+   * @param {Function} next - Express next middleware function
+   * @returns {void} JSON response with budget object (200)
+   */
   async GetBudgetByCategory(req, res, next) {
     try {
       const { userId, categoryId, month, year } = req.query;
@@ -54,6 +94,14 @@ class BudgetController {
     }
   }
 
+  /**
+   * Soft delete a budget by its ID.
+   * @async
+   * @param {Object} req - Express request object with budget id in params
+   * @param {Object} res - Express response object
+   * @param {Function} next - Express next middleware function
+   * @returns {void} JSON response with deleted budget (200)
+   */
   async DeleteBudget(req, res, next) {
     try {
       const id = req.params.id;
@@ -64,6 +112,14 @@ class BudgetController {
     }
   }
 
+  /**
+   * Calculate budget usage (spent vs remaining) for a category in a specific month.
+   * @async
+   * @param {Object} req - Express request object with userId, categoryId, month, year in query
+   * @param {Object} res - Express response object
+   * @param {Function} next - Express next middleware function
+   * @returns {void} JSON response with budget usage data (limit, spent, remaining) (200)
+   */
   async GetBudgetUsage(req, res, next) {
     try {
       const { userId, categoryId, month, year } = req.query;

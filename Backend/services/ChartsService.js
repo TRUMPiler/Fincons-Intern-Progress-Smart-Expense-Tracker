@@ -10,6 +10,14 @@ function getHealthLabel(score) {
 }
 class ChartService {
 
+    /**
+     * Retrieve all month/year combinations for which user has transactions.
+     * Used to populate month/year dropdown filters.
+     * @async
+     * @param {string} userId - The ID of the user
+     * @returns {Promise<Array>} Array of objects with year and month properties
+     * @throws {Error} If aggregation fails
+     */
     async getAvailableMonths(userId) {
         try {
             const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -50,6 +58,14 @@ class ChartService {
         }
     }
 
+    /**
+     * Retrieve all years for which user has transactions.
+     * Used to populate year dropdown filters.
+     * @async
+     * @param {string} userId - The ID of the user
+     * @returns {Promise<Array>} Array of objects with year property
+     * @throws {Error} If aggregation fails
+     */
     async getAvailableYears(userId) {
         try {
             const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -85,6 +101,14 @@ class ChartService {
         }
     }
 
+    /**
+     * Calculate predicted expense for the next month based on current spending pace.
+     * Projects monthly spending from daily average of current month.
+     * @async
+     * @param {string} userId - The ID of the user
+     * @returns {Promise<Object>} Object with predicted expense data amount
+     * @throws {Error} If calculation fails
+     */
     async PredictedExpense(userId) {
         const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
@@ -120,6 +144,18 @@ class ChartService {
         }
     }
 
+    
+
+    /**
+     * Get income vs expense breakdown for a specific month.
+     * Aggregates total income and expense amounts and returns by type.
+     * @async
+     * @param {string} userId - The ID of the user
+     * @param {number} month - The month (1-12), defaults to current if 0/-1/undefined
+     * @param {number} year - The year, defaults to current if 0/-1/undefined
+     * @returns {Promise<Object>} Object with totals {income, expense} and byType array
+     * @throws {Error} If aggregation fails
+     */
     async IncomeExpense(userId,month,year) {
         try {
             if (!userId) return { totals: { income: 0, expense: 0 }, byType: [] };
@@ -160,6 +196,17 @@ class ChartService {
             throw error;
         }
     }
+    
+    /**
+     * Get spending breakdown by category for a specific month.
+     * Returns expense amounts for each category with category names.
+     * @async
+     * @param {string} userId - The ID of the user
+     * @param {number} month - The month (1-12), defaults to current if 0/-1/undefined
+     * @param {number} year - The year, defaults to current if 0/-1/undefined
+     * @returns {Promise<Array>} Array of objects with category and total for each category
+     * @throws {Error} If aggregation fails
+     */
     async CategorywiseSpendingChart(userId,month,year) {
         // Fallback: Convert 0/-1 to current month/year (controller should handle this, but defensive)
         let monthNum = (month == 0 || month == -1 || month === undefined) ? new Date().getMonth() + 1 : month;
@@ -205,6 +252,19 @@ class ChartService {
         return row;
     }
     
+    
+    
+    /**
+     * Calculate comprehensive financial health score (0-100).
+     * Scores based on: savings ratio (40), budget adherence (30), expense control (10), stability (20).
+     * Compares current month against 3-month history.
+     * @async
+     * @param {string} userId - The ID of the user
+     * @param {number} month - The month (1-12), defaults to current if -1
+     * @param {number} year - The year, defaults to current if -1
+     * @returns {Promise<Object>} Object with score, label (Excellent/Good/Average/Poor), breakdown of subscores, and summary
+     * @throws {Error} If calculation fails
+     */
     async getFinancialHealthScore(userId, month, year) {
         
         if(month==-1)
@@ -378,6 +438,17 @@ class ChartService {
         }
     };
 }
+
+    /**
+     * Get monthly expense trend for last 3 months including current month.
+     * Shows total spending for each month for trend analysis.
+     * @async
+     * @param {string} userId - The ID of the user
+     * @param {number} month - The month (1-12), defaults to current if 0/-1/undefined
+     * @param {number} year - The year, defaults to current if 0/-1/undefined
+     * @returns {Promise<Array>} Array of objects with year, month, and totalSpent
+     * @throws {Error} If aggregation fails
+     */
     async MonthlyBudget(userId,month,year) {
         // Fallback: Convert 0/-1 to current month/year (controller should handle this, but defensive)
         let monthNum = (month == 0 || month == -1 || month === undefined) ? new Date().getMonth() + 1 : month;

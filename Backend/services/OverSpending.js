@@ -20,7 +20,7 @@ export const checkOverspending = async (userId, categoryId, transcationId) => {
       return;
     }
 
-    // require a transaction date
+ 
     const txDate = transcation.date ? new Date(transcation.date) : null;
     if (!txDate) {
       console.warn("checkOverspending: transaction has no date", transcationId);
@@ -28,21 +28,16 @@ export const checkOverspending = async (userId, categoryId, transcationId) => {
     }
 
     const now = new Date();
-
-    // If the transaction's month/year is not the current month/year, skip checking
     if (txDate.getMonth() !== now.getMonth() || txDate.getFullYear() !== now.getFullYear()) {
       return;
     }
 
-    // Define the current month window
     const month = now.getMonth();
     const year = now.getFullYear();
     const start = new Date(year, month, 1);
     const next = new Date(year, month + 1, 1);
-    // three months before the current month
     const threeMonthsAgo = new Date(year, month - 3, 1);
 
-    // Sum of expenses in the current month for the category
     const currentAgg = await Transaction.aggregate([
       {
         $match: {
@@ -58,7 +53,6 @@ export const checkOverspending = async (userId, categoryId, transcationId) => {
 
     const currentTotal = currentAgg[0]?.total || 0;
 
-    // History: aggregate totals for the three months preceding the current month
     const historyAgg = await Transaction.aggregate([
       {
         $match: {
@@ -76,8 +70,7 @@ export const checkOverspending = async (userId, categoryId, transcationId) => {
         }
       }
     ]);
-    if(historyAgg<=0||historyAgg==null||history==undefined)
-    {
+    if(historyAgg.length === 0) {
       return;
     }
 
@@ -92,13 +85,8 @@ export const checkOverspending = async (userId, categoryId, transcationId) => {
 
       const message = `You are spending significantly more on ${category?.name || "this category"} this month compared to your previous spending pattern.`;
 
-      await Alert.create({
-        userId,
-        type: "overspending",
-        message
-      });
+      await AlertService.CreateAlert(userId, "overspending", message);
 
-    
       try {
         await mailer.emails.send({
           from: '"MoneyMint" <fincons@moneymint.tech>',
@@ -143,7 +131,6 @@ export const checkBudgetExceeded = async (userId, categoryId, transactionId) => 
       return;
     }
 
-    // Require a transaction date
     const txDate = transaction.date ? new Date(transaction.date) : null;
     if (!txDate) {
       console.warn("checkBudgetExceeded: transaction has no date", transactionId);
@@ -151,12 +138,10 @@ export const checkBudgetExceeded = async (userId, categoryId, transactionId) => 
     }
 
     const now = new Date();
-    // Only check budgets for current month
     if (txDate.getMonth() !== now.getMonth() || txDate.getFullYear() !== now.getFullYear()) {
       return;
     }
 
-    // Get budget for this category in the current month
     const budget = await Budget.findOne({
       userId: new mongoose.Types.ObjectId(userId),
       categoryId: new mongoose.Types.ObjectId(categoryId),
@@ -166,10 +151,9 @@ export const checkBudgetExceeded = async (userId, categoryId, transactionId) => 
     });
 
     if (!budget) {
-      return; // No budget set for this category
+      return;
     }
 
-    // Calculate current spending for this category in the current month
     const month = now.getMonth();
     const year = now.getFullYear();
     const start = new Date(year, month, 1);
@@ -190,12 +174,10 @@ export const checkBudgetExceeded = async (userId, categoryId, transactionId) => 
 
     const currentSpending = spendingAgg[0]?.total || 0;
 
-    // Check if spending exceeds budget limit
     if (currentSpending > budget.limit) {
       const category = await Category.findById(categoryId);
       const user = await User.findById(userId);
 
-      // Check if alert already exists for this budget exceeded
       const existingAlert = await Alert.findOne({
         userId,
         type: "budget_exceeded",
@@ -206,8 +188,6 @@ export const checkBudgetExceeded = async (userId, categoryId, transactionId) => 
         const message = `⚠️ Budget Alert! Your spending in ${category?.name || "this category"} (₹${currentSpending.toFixed(2)}) has exceeded your budget limit of ₹${budget.limit}.`;
 
         await AlertService.CreateAlert(userId, "budget_exceeded", message);
-
-        // Send email notification
         try {
           const exceededAmount = (currentSpending - budget.limit).toFixed(2);
           const percentageExceeded = ((currentSpending / budget.limit) * 100 - 100).toFixed(1);

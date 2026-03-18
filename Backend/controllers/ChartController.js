@@ -2,6 +2,14 @@ import ChartService from "../services/ChartsService.js";
 import Response from "../utils/Response.js";
 
 class ChartController {
+    /**
+     * Get income vs expense breakdown for a specific month and year.
+     * @async
+     * @param {Object} req - Express request object with userId in params, month/year in query
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with income/expense aggregation (200)
+     */
     async getIncomeExpense(req, res, next) {
         try {
             const userId = req.params.userId;
@@ -14,6 +22,14 @@ class ChartController {
             next(error);
         }
     }
+    /**
+     * Get predicted expense for next month based on spending patterns.
+     * @async
+     * @param {Object} req - Express request object with userId in params
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with predicted expense amount (200)
+     */
     async getPredictedExpense(req,res,next)
     {
         try{
@@ -26,6 +42,14 @@ class ChartController {
             next(error);
         }
     }
+    /**
+     * Get spending breakdown by category for a specific month and year.
+     * @async
+     * @param {Object} req - Express request object with userId in params, month/year in query
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with category-wise spending data (200)
+     */
     async CategoryWiseSpending(req,res,next)
     {
         try{
@@ -38,6 +62,14 @@ class ChartController {
             next(error)
         }
     }
+    /**
+     * Get budget usage metrics for all categories in a specific month.
+     * @async
+     * @param {Object} req - Express request object with userId in params, month/year in query
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with budget data for month (200)
+     */
     async MonthlyBudget(req,res,next)
     {   
         try{
@@ -50,6 +82,14 @@ class ChartController {
             next(error);
         }
     }
+    /**
+     * Calculate financial health score based on spending patterns, savings, and budget adherence.
+     * @async
+     * @param {Object} req - Express request object with userId, month, year in query
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with health score, label, and breakdown (200)
+     */
     async FinancialHealthReview(req,res,next)
     {
         try{
@@ -61,6 +101,14 @@ class ChartController {
             next(error);
         }
     }
+    /**
+     * Retrieve all available months for which user has transactions or budgets.
+     * @async
+     * @param {Object} req - Express request object with userId in params
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with available months array (200)
+     */
     async getAvailableMonths(req,res,next)
     {
         try{
@@ -73,6 +121,14 @@ class ChartController {
         }
     }
 
+    /**
+     * Retrieve all available years for which user has transactions or budgets.
+     * @async
+     * @param {Object} req - Express request object with userId in params
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with available years array (200)
+     */
     async getAvailableYears(req,res,next)
     {
         try{

@@ -102,8 +102,10 @@ const DashboardL: FC = () => {
             if(response.status==200)
             {
                  toast.current?.show({ severity: 'info', summary: 'Alert Closed', detail: "You won't be alerted again", life: 3000 });
+                
+                 dispatch(fetchAlerts());
             }
-            return response;
+    
         }catch(err){
             console.error('Failed to mark alert read', err);
             throw err;
@@ -171,13 +173,21 @@ const DashboardL: FC = () => {
         }
         dispatch(fetchAvailableMonths())
         dispatch(fetchFinancialHealth({ month: useDashboard.month, year: useDashboard.year }))
-        dispatch(fetchAlerts())
         dispatch(fetchBudgetWiseUsage({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchPredict())
+        dispatch(fetchAlerts());
         dispatch(fetchMonthlyTrend({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchCategorySpending({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchTotals({ month: useDashboard.month, year: useDashboard.year }))
     }, [transcations, dispatch, useDashboard.month, useDashboard.year])
+
+    // Fetch alerts only once on component mount, not on every transaction change
+    useEffect(() => {
+        const userid = sessionStorage.getItem('id')
+        if (userid) {
+            dispatch(fetchAlerts())
+        }
+    }, [dispatch])
 
 
     useEffect(() => {
@@ -349,7 +359,7 @@ const DashboardL: FC = () => {
     }, [charts.availableMonths, isInitialized, useDashboard]);
 
     useEffect(() => {
-        // Check if all required data has been fetched
+     
         const allDataLoaded = 
             charts.financialHealth && 
             charts.categorySpending &&

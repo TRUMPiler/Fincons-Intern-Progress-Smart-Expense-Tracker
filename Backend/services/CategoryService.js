@@ -2,6 +2,14 @@ import Category from "../models/Category.js";
 
 class CategoryService {
 
+  /**
+   * Create a new expense category (user-defined or default).
+   * Prevents duplicate categories with same name for user or system-wide.
+   * @async
+   * @param {Object} userCategory - Category object with name, userId (optional), isDefault (optional)
+   * @returns {Promise<Object>} The created category document
+   * @throws {Error} If category already exists or creation fails
+   */
   async CreateCategory(userCategory) {
     try {
 
@@ -28,6 +36,14 @@ class CategoryService {
     }
   }
 
+  /**
+   * Update an existing category's name by ID.
+   * @async
+   * @param {string} name - The new category name
+   * @param {string} categoryID - The category ID to update
+   * @returns {Promise<Object>} MongoDB update result object
+   * @throws {Error} If update fails
+   */
   async UpdateCategory(name, categoryID) {
     try {
 
@@ -43,6 +59,15 @@ class CategoryService {
     }
   }
 
+  /**
+   * Retrieve all categories accessible to a user.
+   * Returns system default categories and user-created categories.
+   * Results are sorted alphabetically by name.
+   * @async
+   * @param {string} userId - The ID of the user (optional for default-only retrieval)
+   * @returns {Promise<Array>} Array of category objects
+   * @throws {Error} If retrieval fails
+   */
   async GetCategories(userId) {
     try {
       if (userId) {
@@ -57,6 +82,13 @@ class CategoryService {
     }
   }
 
+  /**
+   * Ensure all default expense categories exist in the database.
+   * Creates any missing default categories like Food, Transport, Shopping, etc.
+   * @async
+   * @returns {Promise<void>}
+   * @throws {Error} If category creation fails
+   */
   async ensureDefaultCategories() {
     try {
       const defaults = [

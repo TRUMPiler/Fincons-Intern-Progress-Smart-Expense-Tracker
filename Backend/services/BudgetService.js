@@ -3,8 +3,18 @@ import Budget from "../models/Budget.js";
 import Transaction from "../models/Transaction.js";
 import LogService from "./LogService.js";
 import user from '../models/user.js';
+import Alert from "../models/Alert.js";
+import Category from "../models/Category.js";
 class BudgetService {
 
+    /**
+     * Create a new budget for a user in a specific category for a given month/year.
+     * Prevents duplicate budgets for the same category and time period.
+     * @param {Object} budgetData - Budget data object containing categoryId, limit, month, year, isRecurring
+     * @param {string} userId - The ID of the user creating the budget
+     * @returns {Promise<Object>} The created budget object
+     * @throws {Error} If budget already exists or creation fails
+     */
     async CreateBudget(budgetData, userId) {
         try {
 
@@ -47,6 +57,13 @@ class BudgetService {
         }
     }
 
+    /**
+     * Retrieve all unique month/year combinations for which budgets exist for a user.
+     * Excludes soft-deleted budgets.
+     * @param {string} userId - The ID of the user
+     * @returns {Promise<Array>} Array of objects with month and year properties
+     * @throws {Error} If retrieval fails
+     */
     async getBudgetMonths(userId) {
         try {
             console.log("userId:" + userId);
@@ -91,6 +108,15 @@ class BudgetService {
             throw new Error(error);
         }
     }
+    /**
+     * Update an existing budget with new data and clear related alerts.
+     * When budget is updated, clears any budget_exceeded alerts to allow new alerts
+     * to be generated based on the updated limit.
+     * @param {string} budgetId - The ID of the budget to update
+     * @param {Object} updatedData - Object containing fields to update (limit, isRecurring, etc.)
+     * @returns {Promise<Object>} The updated budget object
+     * @throws {Error} If update fails
+     */
     async UpdateBudget(budgetId, updatedData) {
         try {
 
@@ -100,7 +126,22 @@ class BudgetService {
                 { new: true }
             );
 
-       
+            try {
+                const category = await Category.findById(updated?.categoryId);
+                if (category && updated?.userId) {
+    
+                    await Alert.deleteMany({
+                        userId: updated.userId,
+                        type: "budget_exceeded",
+                        message: { $regex: category.name }
+                    });
+                    console.log(`Cleared budget_exceeded alerts for user ${updated.userId} in category ${category.name}`);
+                }
+            } catch (alertErr) {
+                console.error("Failed to clear budget alerts on update", alertErr);
+        
+            }
+
             try {
                 const action = `User ${updated?.userId} updated budget ${updated?._id} to limit ₹${updated?.limit}`;
                 await LogService.CreateLog(updated?.userId, action, {
@@ -119,6 +160,16 @@ class BudgetService {
         }
     }
 
+    /**
+     * Retrieve all budgets for a user in a specific month/year.
+     * Automatically creates recurring budgets if eligible.
+     * Excludes soft-deleted budgets.
+     * @param {string} userId - The ID of the user
+     * @param {number} month - The month (1-12)
+     * @param {number} year - The year
+     * @returns {Promise<Array>} Array of budget objects with populated category names
+     * @throws {Error} If retrieval fails
+     */
     async GetBudgets(userId, month, year) {
         try {
             this.CreateRecurringBudget(userId);
@@ -135,6 +186,16 @@ class BudgetService {
         }
     }
 
+    /**
+     * Retrieve a specific budget for a user's category in a given month/year.
+     * Excludes soft-deleted budgets.
+     * @param {string} userId - The ID of the user
+     * @param {string} categoryId - The ID of the category
+     * @param {number} month - The month (1-12)
+     * @param {number} year - The year
+     * @returns {Promise<Object|null>} The budget object or null if not found
+     * @throws {Error} If retrieval fails
+     */
     async GetBudgetByCategory(userId, categoryId, month, year) {
         try {
 
@@ -153,6 +214,13 @@ class BudgetService {
         }
     }
 
+    /**
+     * Soft delete a budget by marking it as deleted without removing from database.
+     * Preserves audit trail and historical data.
+     * @param {string} budgetId - The ID of the budget to delete
+     * @returns {Promise<Object>} The soft-deleted budget object with isDelete=true
+     * @throws {Error} If deletion fails
+     */
     async DeleteBudget(budgetId) {
         try {
 
@@ -187,7 +255,14 @@ class BudgetService {
             throw error;
         }
     }
- async CreateRecurringBudget(userId) {
+    /**
+     * Create recurring budgets for the current month based on previous month's recurring budgets.
+     * Only executed when fetching budgets for current month.
+     * @param {string} userId - The ID of the user
+     * @returns {Promise<void>}
+     * @throws {Error} If user not found or creation fails
+     */
+    async CreateRecurringBudget(userId) {
     try {
         const now = new Date();
 
@@ -255,6 +330,16 @@ class BudgetService {
         throw error;
     }
 }
+    /**
+     * Calculate budget usage for a category in a specific month.
+     * Returns the limit, spent amount, and remaining balance.
+     * @param {string} userId - The ID of the user
+     * @param {string} categoryId - The ID of the category
+     * @param {number} month - The month (1-12)
+     * @param {number} year - The year
+     * @returns {Promise<Object>} Object with limit, spent, and remaining properties
+     * @throws {Error} If calculation fails
+     */
     async GetBudgetUsage(userId, categoryId, month, year) {
 
         try {

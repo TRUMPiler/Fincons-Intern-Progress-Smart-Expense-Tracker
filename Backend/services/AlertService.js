@@ -3,6 +3,12 @@ import Alert from "../models/Alert.js";
 
 class AlertService
 {
+    /**
+     * Retrieve all unread alerts for a specific user.
+     * @param {string} userId - The ID of the user
+     * @returns {Promise<Array>} Array of unread alert objects
+     * @throws {Error} If alerts cannot be retrieved from the database
+     */
     async GetAlert(userId)
     {
      try{
@@ -20,6 +26,15 @@ class AlertService
         throw new Error(error);
       }
     }
+
+    /**
+     * Create a new alert for a user.
+     * @param {string} userId - The ID of the user to create alert for
+     * @param {string} type - The type of alert (e.g., "budget_exceeded", "overspending")
+     * @param {string} message - The alert message content
+     * @returns {Promise<Object>} The created alert object
+     * @throws {Error} If alert creation fails
+     */
     async CreateAlert(userId, type, message) {
         try {
             const alert = await Alert.create({
@@ -34,13 +49,20 @@ class AlertService
             throw error;
         }
     }
-   async UpdateAlert(_id)
+
+    /**
+     * Mark an alert as read by updating its isRead status to true.
+     * @param {string} _id - The ID of the alert to update
+     * @returns {Promise<Object>} The updated alert object
+     * @throws {Error} If alert not found or update fails
+     */
+    async UpdateAlert(_id)
     {
         try{
-            const updateAlert=Alert.findByIdAndUpdate({_id:_id},{isRead:true});
+            const updateAlert = await Alert.findByIdAndUpdate(_id, {isRead:true}, { new: true });
             if(!updateAlert)
             {
-                throw new Error("No Alert found with this id"+_id,{statusCode:404});
+                throw new Error("No Alert found with this id "+_id,{statusCode:404});
             }
             return updateAlert;
         }

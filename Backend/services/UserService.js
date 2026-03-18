@@ -3,6 +3,14 @@ import UserSchema from "../models/user.js";
 
 class UserService {
 
+    /**
+     * Create a new user account with validation.
+     * Checks for existing email and hashes password before saving.
+     * @async
+     * @param {Object} user - User object with name, email, password
+     * @returns {Promise<Object>} The created user document
+     * @throws {Error} If email already exists or creation fails (409 status)
+     */
     async createUser(user) {
         try {
             // Check if user already exists
@@ -20,6 +28,14 @@ class UserService {
         }
     }
 
+    /**
+     * Mark a user as verified by ID.
+     * Updates isVerified flag to true after email confirmation.
+     * @async
+     * @param {string} id - The user ID to verify
+     * @returns {Promise<Object>} The user object (from before update)
+     * @throws {Error} If user not found (404 status)
+     */
     async VerifyUser(id) {
         try {
             const user = await UserSchema.findById(id);
@@ -33,6 +49,15 @@ class UserService {
         }
     }
 
+    /**
+     * Authenticate user with email and password.
+     * Compares provided password against hashed password in database.
+     * @async
+     * @param {string} email - The user's email address
+     * @param {string} password - The plain text password to verify
+     * @returns {Promise<Object|null>} The user object if authenticated, null if password doesn't match, false if email not found
+     * @throws {Error} If comparison fails
+     */
     async LoginUser(email, password) {
         try {
             const login = await UserSchema.findOne({ email: email });
@@ -55,6 +80,13 @@ class UserService {
         }
     }
 
+    /**
+     * Retrieve a user by their ID.
+     * @async
+     * @param {string} id - The user ID to fetch
+     * @returns {Promise<Object>} The user document
+     * @throws {Error} If user not found (404 status)
+     */
     async getUserById(id) {
         try {
             const user = await UserSchema.findById(id);

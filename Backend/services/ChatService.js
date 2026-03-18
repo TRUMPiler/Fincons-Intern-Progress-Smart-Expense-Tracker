@@ -8,7 +8,14 @@ import Budget from "../models/Budget.js";
 
 class ChatService {
 
-     
+    /**
+     * Initialize chat session for a user with welcome message.
+     * Creates first chat message from AI model to user.
+     * @async
+     * @param {string} userId - The ID of the user initializing chat
+     * @returns {Promise<Object>} The created chat message document
+     * @throws {Error} If user not found (404 status) or creation fails
+     */
     async ChatIntialization(userId) {
         try {
             const userData = await user.findOne({ _id: userId });
@@ -40,6 +47,13 @@ class ChatService {
             throw error;
         }
     }
+    /**
+     * Retrieve all chat messages for a user sorted by creation time.
+     * @async
+     * @param {string} userId - The ID of the user
+     * @returns {Promise<Array>} Array of chat message objects, empty array if none exist
+     * @throws {Error} If retrieval fails
+     */
     async GetChats(userId) {
         console.log("invoked");
         try {
@@ -51,6 +65,16 @@ class ChatService {
             throw new Error(error);
         }
     }
+
+    /**
+     * Send a user message and get AI response.
+     * Stores both user and AI messages in database, includes financial context.
+     * @async
+     * @param {string} userId - The ID of the user sending message
+     * @param {string} message - The user's message content
+     * @returns {Promise<Array>} Array of all chat messages including new AI response
+     * @throws {Error} If user not found (404 status) or message processing fails
+     */
     async SendChat(userId, message) {
         try {
 
@@ -101,7 +125,7 @@ class ChatService {
             throw new Error(error);
         }
     }
-   
+
 
 }
 

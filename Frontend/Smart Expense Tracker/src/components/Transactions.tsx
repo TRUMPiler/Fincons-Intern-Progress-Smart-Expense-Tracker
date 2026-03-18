@@ -147,6 +147,11 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
                 toast?.current?.show({severity:"error",summary:"Details Not Complete",detail:"Please give all the data"});
                 return;
             }
+            if(Number(amount)==0)
+            {
+                toast?.current?.show({severity:"error",summary:"Amount Cannot be 0",detail:"Please give amount more than 0"});
+                return;
+            }
             const userId = sessionStorage.getItem("id");
             // validate date within allowed range (min 2 years ago, max now)
             const minDate = new Date();
@@ -208,7 +213,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
     const onRowEditComplete = async (e: any) => {
         const { newData, index } = e;
         const updated: any = { ...newData };
-        // ensure category is an id string for backend
+
         if (updated.category && typeof updated.category === 'object') {
             updated.category = updated.category._id ?? updated.category.value ?? '';
         }
@@ -221,8 +226,11 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
                     updated.date = parsed.toISOString();
                 }
             }
-
-            // validate updated date within allowed range
+            if(updated.amount==0)
+            {
+                toast?.current?.show({severity:"error",summary:"Amount cannot be 0",detail:"Please enter a amount that is not o"});
+                return;
+            }
             const minDate = new Date();
             minDate.setFullYear(minDate.getFullYear() - 2);
             const maxDate = new Date();

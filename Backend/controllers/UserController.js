@@ -4,6 +4,15 @@ import mailer from "../mailer/Transport.js";
 import Token from "../authentication/JWTauthentication.js";
 
 class UserController {
+    /**
+     * Authenticate user with email and password.
+     * Sets refresh token in HTTP-only cookie and returns access token.
+     * @async
+     * @param {Object} req - Express request object with email and password in body, IP address
+     * @param {Object} res - Express response object to set refreshToken cookie
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with user data and access token (200)
+     */
     async Login(req, res, next) {
         try {
             const { email, password } = req.body;
@@ -38,6 +47,15 @@ class UserController {
         }
     }
 
+    /**
+     * Register a new user account with validation.
+     * Sends verification email to the registered email address.
+     * @async
+     * @param {Object} req - Express request object with name, email, password in body
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with registered user data (201)
+     */
     async Register(req, res, next) {
         try {
             const { name, email, password } = req.body;

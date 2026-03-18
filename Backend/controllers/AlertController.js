@@ -3,6 +3,14 @@ import Response from "../utils/Response.js";
 
 class AlertController
 {
+    /**
+     * Retrieve all unread alerts for a specific user.
+     * @async
+     * @param {Object} req - Express request object with userId in params
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with alerts array
+     */
     async GetAlert(req,res,next)
     {
         try{
@@ -13,6 +21,14 @@ class AlertController
             next(Error);
         }
     }
+    /**
+     * Mark an alert as read/updated by its ID.
+     * @async
+     * @param {Object} req - Express request object with AlertId in params
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with updated alert
+     */
     async updateAlert(req,res,next)
     {
         try{

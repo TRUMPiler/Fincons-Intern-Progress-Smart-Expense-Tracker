@@ -3,6 +3,14 @@ import Response from "../utils/Response.js";
 
 class AuthController {
 
+    /**
+     * Refresh access token using valid refresh token from cookies.
+     * @async
+     * @param {Object} req - Express request object with refreshToken cookie and userId in body
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with new access token (200)
+     */
     async RefreshToken(req, res, next) {
         try {
             // Get refresh token from HTTP-only cookie
@@ -27,6 +35,14 @@ class AuthController {
         }
     }
 
+    /**
+     * Verify if refresh token is still valid.
+     * @async
+     * @param {Object} req - Express request object with refreshToken cookie
+     * @param {Object} res - Express response object
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response with validity status and userId (200)
+     */
     async VerifyRefreshToken(req, res, next) {
         try {
             // Get refresh token from HTTP-only cookie
@@ -44,6 +60,14 @@ class AuthController {
         }
     }
 
+    /**
+     * Logout user by clearing refresh token cookie.
+     * @async
+     * @param {Object} req - Express request object
+     * @param {Object} res - Express response object with refreshToken cookie to clear
+     * @param {Function} next - Express next middleware function
+     * @returns {void} JSON response confirming logout (200)
+     */
     async Logout(req, res, next) {
         try {
             // Clear the refresh token cookie

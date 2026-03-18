@@ -1,4 +1,4 @@
-import { TrashIcon, Plus,  DollarSign } from "lucide-react";
+import { TrashIcon, Plus, DollarSign } from "lucide-react";
 import { Column, type ColumnEditorOptions } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
@@ -7,36 +7,35 @@ import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from "primereact/dropdown";
-import {Toast} from "primereact/toast";
+import { Toast } from "primereact/toast";
 import api from "../lib/axiosInstance";
 import { Card } from "primereact/card";
-type CategoryProp={
-    name:string;
-    _id:string;
+type CategoryProp = {
+    name: string;
+    _id: string;
 }
 type TranscationType = {
     _id: string | number;
     userId?: string | number;
     amount?: number;
-    category?: CategoryProp|null;
+    category?: CategoryProp | null;
     description?: string;
     type?: "income" | "expense";
     date?: string;
     isDelete?: boolean;
 };
 
-const Transcation:FC=()=>
-{
-       const [addTranscationVisible,setAddTranscationVisible]=useState<boolean>(false);
-    
-            const [typedCategory, setTypedCategory] = useState('');
-            const [amount, setAmount] = useState<string>("");
-            const [selectedCategory, setSelectedCategory] = useState<string>("");
-            const [description, setDescription] = useState<string>("");
-            const [transactionType, setTransactionType] = useState<"income" | "expense" | "">("");
-            const [dateVal, setDateVal] = useState<string>(new Date().toISOString().slice(0,10));
-            const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-               const toLocalDatetimeInputValue = (date?: string | Date) => {
+const Transcation: FC = () => {
+    const [addTranscationVisible, setAddTranscationVisible] = useState<boolean>(false);
+
+    const [typedCategory, setTypedCategory] = useState('');
+    const [amount, setAmount] = useState<string>("");
+    const [selectedCategory, setSelectedCategory] = useState<string>("");
+    const [description, setDescription] = useState<string>("");
+    const [transactionType, setTransactionType] = useState<"income" | "expense" | "">("");
+    const [dateVal, setDateVal] = useState<string>(new Date().toISOString().slice(0, 10));
+    const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+    const toLocalDatetimeInputValue = (date?: string | Date) => {
         const d = date ? new Date(date) : new Date();
         const pad = (n: number) => n.toString().padStart(2, '0');
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -47,10 +46,10 @@ const Transcation:FC=()=>
         d.setFullYear(d.getFullYear() - 2);
         return toLocalDatetimeInputValue(d);
     };
-            const [yearOptions, setYearOptions] = useState<Array<{ label: string; value: number }>>([]);
-        const [categoryOptions, setCategoryOptions] = useState<Array<{ label: string; value: string }>>([]);
-        const [transactions,setTranscation]=useState<TranscationType[]>([]);
-   const amountEditor = (options: ColumnEditorOptions) => (
+    const [yearOptions, setYearOptions] = useState<Array<{ label: string; value: number }>>([]);
+    const [categoryOptions, setCategoryOptions] = useState<Array<{ label: string; value: string }>>([]);
+    const [transactions, setTranscation] = useState<TranscationType[]>([]);
+    const amountEditor = (options: ColumnEditorOptions) => (
         <InputText type="number" value={options.value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => options.editorCallback!(e.target.value)} className="w-full" />
     );
 
@@ -61,59 +60,58 @@ const Transcation:FC=()=>
     const categoryEditor = (options: ColumnEditorOptions) => {
         const val = typeof options.value === 'string' ? options.value : options.value?._id ?? '';
         return (
-            <Dropdown options={categoryOptions} value={val} onChange={(e:any) => options.editorCallback!(e.value)} optionLabel="label" optionValue="value" className="w-full" />
+            <Dropdown options={categoryOptions} value={val} onChange={(e: any) => options.editorCallback!(e.value)} optionLabel="label" optionValue="value" className="w-full" />
         );
     };
 
     const typeEditor = (options: ColumnEditorOptions) => (
-        <Dropdown options={[{label:'Income', value:'income'}, {label:'Expense', value:'expense'}]} value={options.value} onChange={(e:any) => options.editorCallback!(e.value)} optionLabel="label" optionValue="value" className="w-full" />
+        <Dropdown options={[{ label: 'Income', value: 'income' }, { label: 'Expense', value: 'expense' }]} value={options.value} onChange={(e: any) => options.editorCallback!(e.value)} optionLabel="label" optionValue="value" className="w-full" />
     );
 
     const dateEditor = (options: ColumnEditorOptions) => {
-      const val = options.value ? toLocalDatetimeInputValue(options.value) : '';
+        const val = options.value ? toLocalDatetimeInputValue(options.value) : '';
         return <InputText type="datetime-local" value={val} onChange={(e: any) => options.editorCallback!(e.target.value)} min={getMinDatetimeLocal()} max={getMaxDatetimeLocal()} className="w-full" />;
     };
     const toast = useRef<Toast | null>(null);
-    
+
     useEffect(() => {
         // const JwtToken = sessionStorage.getItem("jwtToken");
         const userId = sessionStorage.getItem("id");
-        if(!userId)
-        {
-            window.location.href="/login";
+        if (!userId) {
+            window.location.href = "/login";
         }
-        
+
         api.get(`/api/category/?userId=${userId}`)
-        .then((res) => {
-            const cats = res?.data?.data ?? [];
-            const opts = cats.map((c: any) => ({ label: c.name, value: c._id }));
-            setCategoryOptions(opts);
-        })
-        .catch((err) => console.error("Category fetch failed", err));
+            .then((res) => {
+                const cats = res?.data?.data ?? [];
+                const opts = cats.map((c: any) => ({ label: c.name, value: c._id }));
+                setCategoryOptions(opts);
+            })
+            .catch((err) => console.error("Category fetch failed", err));
 
         api.get(`/api/charts/years/${userId}`)
-        .then((res) => {
-            console.log("Years API response:", res);
-            console.log("Years data:", res?.data);
-            const yearsData = res?.data?.data ?? [];
-            console.log("Years array:", yearsData);
-            const opts = yearsData.map((y: any) => ({ label: y.year.toString(), value: y.year }));
-            console.log("Year options:", opts);
-            setYearOptions(opts);
-            if (opts.length > 0) {
-                setSelectedYear(opts[0].value);
-            }
-        })
-        .catch((err) => {
-            console.error("Years fetch error:", err);
-            setYearOptions([]);
-        });
+            .then((res) => {
+                console.log("Years API response:", res);
+                console.log("Years data:", res?.data);
+                const yearsData = res?.data?.data ?? [];
+                console.log("Years array:", yearsData);
+                const opts = yearsData.map((y: any) => ({ label: y.year.toString(), value: y.year }));
+                console.log("Year options:", opts);
+                setYearOptions(opts);
+                if (opts.length > 0) {
+                    setSelectedYear(opts[0].value);
+                }
+            })
+            .catch((err) => {
+                console.error("Years fetch error:", err);
+                setYearOptions([]);
+            });
     }, []);
 
     useEffect(() => {
         const userId = sessionStorage.getItem("id");
-        if(!userId) return;
-        
+        if (!userId) return;
+
         api
             .get<TranscationType[]>(
                 `/api/transcation/all/${userId}?year=${selectedYear}`,
@@ -138,12 +136,16 @@ const Transcation:FC=()=>
         setSelectedCategory("");
         setDescription("");
         setTransactionType("");
-        setDateVal(new Date().toISOString().slice(0,10));
+        setDateVal(new Date().toISOString().slice(0, 10));
     };
 
     const handleAddSubmit = async () => {
         try {
             const userId = sessionStorage.getItem("id");
+            if (Number(amount) <= 0) {
+                toast.current?.show({ severity: "error", summary: "Amount Invalid", detail: "Amount Cannot be equal or less than 0" });
+                return;
+            }
             const payload = {
                 userId,
                 amount: Number(amount),
@@ -161,8 +163,8 @@ const Transcation:FC=()=>
 
             if (res.status === 201) {
                 const created = res.data?.data ?? res.data;
-                
-                setTranscation((prev) => [ ...prev,created]);
+
+                setTranscation((prev) => [...prev, created]);
                 setAddTranscationVisible(false);
                 resetForm();
                 toast.current?.show({ severity: "success", summary: "Transaction Added", detail: "Transaction created" });
@@ -176,7 +178,7 @@ const Transcation:FC=()=>
     const handleDelete = async (id: string | number) => {
         if (!confirm("Delete this transaction?")) return;
         try {
-            await api.delete(`/api/transcation/${id}`).then((response)=>{
+            await api.delete(`/api/transcation/${id}`).then((response) => {
                 console.log(response);
             })
             setTranscation((prev) => prev.filter((t) => t._id !== id));
@@ -191,6 +193,10 @@ const Transcation:FC=()=>
         // ensure category is an id string for backend
         if (updated.category && typeof updated.category === 'object') {
             updated.category = updated.category._id ?? updated.category.value ?? '';
+        }
+        if (Number(updated.amount) <= 0) {
+            toast.current?.show({ severity: "error", summary: "Amount Invalid", detail: "Amount Cannot be equal or less than 0" });
+            return;
         }
         // normalize date to ISO
         if (updated.date && typeof updated.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(updated.date)) {
@@ -215,41 +221,41 @@ const Transcation:FC=()=>
             toast.current?.show({ severity: 'error', summary: 'Save failed', detail: String(err) });
         }
     };
-    const priceBodyTemplate = (Transaction:TranscationType) => {
-        return <p className={`${Transaction.type==="expense"?"text-red-500":'text-green-500'}`}>{formatCurrency(Number(Transaction.amount))}</p>
+    const priceBodyTemplate = (Transaction: TranscationType) => {
+        return <p className={`${Transaction.type === "expense" ? "text-red-500" : 'text-green-500'}`}>{formatCurrency(Number(Transaction.amount))}</p>
     };
-  const createCategory = async (name: string) => {
-    try {
-      const { data } = await api.post(`/api/category`, 
-        { name, userId: sessionStorage.getItem("id") }
-      );
-      const created = data?.data ?? data;
-      const newOpt = { label: created.name || name, value: created._id || Math.random().toString(36).slice(2) };
-      setCategoryOptions((prev) => [newOpt, ...prev]);
-      setSelectedCategory(newOpt.value);
-      setTypedCategory('');
-      toast.current?.show({ severity: 'success', summary: 'Category created', detail: `Created "${newOpt.label}"` });
-    } catch (err) {
-      toast.current?.show({ severity: 'error', summary: 'Category create failed', detail: String(err) });
-    }
-  };
- const formatCurrency = (value:number) => {
+    const createCategory = async (name: string) => {
+        try {
+            const { data } = await api.post(`/api/category`,
+                { name, userId: sessionStorage.getItem("id") }
+            );
+            const created = data?.data ?? data;
+            const newOpt = { label: created.name || name, value: created._id || Math.random().toString(36).slice(2) };
+            setCategoryOptions((prev) => [newOpt, ...prev]);
+            setSelectedCategory(newOpt.value);
+            setTypedCategory('');
+            toast.current?.show({ severity: 'success', summary: 'Category created', detail: `Created "${newOpt.label}"` });
+        } catch (err) {
+            toast.current?.show({ severity: 'error', summary: 'Category create failed', detail: String(err) });
+        }
+    };
+    const formatCurrency = (value: number) => {
         return value.toLocaleString('en-US', { style: 'currency', currency: 'INR' });
     };
-  const handleCategoryChange = (e: any) => {
-    const val = e.value;
-    console.log(val);
-    if (typeof val === 'string' && val.startsWith('__add__:')) {
-      const name = val.slice('__add__:'.length);
-      createCategory(name);
-    } else {
-      setSelectedCategory(val);
-    }
-  };
+    const handleCategoryChange = (e: any) => {
+        const val = e.value;
+        console.log(val);
+        if (typeof val === 'string' && val.startsWith('__add__:')) {
+            const name = val.slice('__add__:'.length);
+            createCategory(name);
+        } else {
+            setSelectedCategory(val);
+        }
+    };
     return (
         <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
             <Toast ref={toast} />
-            
+
             {/* Header Section */}
             <div className="mb-8">
                 <div className="flex flex-col lg:flex-row items-center justify-between mb-2">
@@ -275,7 +281,7 @@ const Transcation:FC=()=>
                                 className="w-full"
                             />
                         </div>
-                        <button 
+                        <button
                             onClick={() => setAddTranscationVisible(true)}
                             className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                         >
@@ -288,27 +294,27 @@ const Transcation:FC=()=>
                 <p className="text-gray-600 dark:text-gray-400">Manage and track all your income and expenses for year {selectedYear}</p>
             </div>
 
-            <Dialog 
+            <Dialog
                 header={
                     <div className="flex items-center gap-2">
                         <Plus className="w-5 h-5 text-indigo-500" />
                         <span>Add New Transaction</span>
                     </div>
-                } 
-                visible={addTranscationVisible} 
+                }
+                visible={addTranscationVisible}
                 onHide={() => {
                     setAddTranscationVisible(false);
                     resetForm();
-                }} 
+                }}
                 className="min-w-[90vw] md:min-w-[60vw]"
                 modal
             >
                 <form className="flex flex-col gap-6 p-2">
                     <FloatLabel className="w-full">
-                        <InputText 
-                            type="number" 
-                            value={amount} 
-                            onChange={(e: any) => setAmount(e.target.value)} 
+                        <InputText
+                            type="number"
+                            value={amount}
+                            onChange={(e: any) => setAmount(e.target.value)}
                             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             placeholder="0.00"
                         />
@@ -344,9 +350,9 @@ const Transcation:FC=()=>
                     </div>
 
                     <FloatLabel className="w-full">
-                        <InputText 
-                            value={description} 
-                            onChange={(e: any) => setDescription(e.target.value)} 
+                        <InputText
+                            value={description}
+                            onChange={(e: any) => setDescription(e.target.value)}
                             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             placeholder="Enter description..."
                         />
@@ -355,42 +361,42 @@ const Transcation:FC=()=>
 
                     <div>
                         <label className="block mb-2 text-gray-700 dark:text-gray-300 font-semibold">Type</label>
-                        <Dropdown 
+                        <Dropdown
                             options={[
-                                { label: '💰 Income', value: 'income' }, 
+                                { label: '💰 Income', value: 'income' },
                                 { label: '💸 Expense', value: 'expense' }
-                            ]} 
-                            value={transactionType} 
-                            onChange={(e: any) => setTransactionType(e.value)} 
-                            optionLabel="label" 
-                            optionValue="value" 
-                            placeholder="Select type" 
+                            ]}
+                            value={transactionType}
+                            onChange={(e: any) => setTransactionType(e.value)}
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Select type"
                             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600"
                         />
                     </div>
 
-                          <FloatLabel className="w-full">
-                            <InputText type="datetime-local" value={dateVal} onChange={(e:any)=>setDateVal(e.target.value)} min={getMinDatetimeLocal()} max={getMaxDatetimeLocal()} className="w-full" />
-                            <label>Date & Time</label>
-                        </FloatLabel>
+                    <FloatLabel className="w-full">
+                        <InputText type="datetime-local" value={dateVal} onChange={(e: any) => setDateVal(e.target.value)} min={getMinDatetimeLocal()} max={getMaxDatetimeLocal()} className="w-full" />
+                        <label>Date & Time</label>
+                    </FloatLabel>
 
 
                     <div className="flex justify-end gap-3 pt-4">
-                        <Button 
-                            label="Cancel" 
+                        <Button
+                            label="Cancel"
                             className="px-6 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold transition-all"
-                            onClick={() => { 
-                                setAddTranscationVisible(false); 
-                                resetForm(); 
-                            }} 
+                            onClick={() => {
+                                setAddTranscationVisible(false);
+                                resetForm();
+                            }}
                         />
-                        <Button 
-                            label="Add Transaction" 
+                        <Button
+                            label="Add Transaction"
                             className="px-6 py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 font-semibold transition-all shadow-lg"
-                            onClick={(e: any) => { 
-                                e.preventDefault(); 
-                                handleAddSubmit(); 
-                            }} 
+                            onClick={(e: any) => {
+                                e.preventDefault();
+                                handleAddSubmit();
+                            }}
                         />
                     </div>
                 </form>
@@ -398,15 +404,15 @@ const Transcation:FC=()=>
 
             {/* Transactions Table */}
             <Card className="shadow-lg rounded-xl overflow-hidden border-0">
-                <DataTable 
-                    paginator 
+                <DataTable
+                    paginator
                     rows={10}
                     rowsPerPageOptions={[5, 10, 20]}
-                    value={transactions} 
-                    stripedRows 
+                    value={transactions}
+                    stripedRows
                     removableSort
-                    editMode="row" 
-                    dataKey="_id" 
+                    editMode="row"
+                    dataKey="_id"
                     className="w-full"
                     tableStyle={{ minWidth: '50rem' }}
                     emptyMessage={
@@ -418,10 +424,10 @@ const Transcation:FC=()=>
                     onRowEditComplete={onRowEditComplete}
                     responsiveLayout="scroll"
                 >
-                    <Column 
-                        field="amount" 
-                        header="Amount" 
-                        editor={amountEditor}  
+                    <Column
+                        field="amount"
+                        header="Amount"
+                        editor={amountEditor}
                         body={priceBodyTemplate}
                         style={{ width: '12%' }}
                         sortable
@@ -441,9 +447,9 @@ const Transcation:FC=()=>
                             return <span className="font-medium">{cat?.name ?? cat?._id ?? "-"}</span>;
                         }}
                     />
-                    <Column 
-                        field="description" 
-                        header="Description" 
+                    <Column
+                        field="description"
+                        header="Description"
                         editor={textEditor}
                         style={{ width: '25%' }}
                         body={(row: any) => <span className="text-gray-700 dark:text-gray-300">{row.description || '-'}</span>}
@@ -455,19 +461,18 @@ const Transcation:FC=()=>
                         editor={typeEditor}
                         style={{ width: '12%' }}
                         body={(row: TranscationType) => (
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                row.type === "income" 
-                                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200" 
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${row.type === "income"
+                                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
                                     : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
-                            }`}>
+                                }`}>
                                 {row.type === "income" ? "💰 Income" : "💸 Expense"}
                             </span>
                         )}
                     />
-                    <Column 
-                        field="date" 
-                        header="Date" 
-                        editor={dateEditor} 
+                    <Column
+                        field="date"
+                        header="Date"
+                        editor={dateEditor}
                         sortable
                         style={{ width: '15%' }}
                         body={(row: TranscationType) => (
@@ -475,23 +480,23 @@ const Transcation:FC=()=>
                                 {/* <Calendar className="w-4 h-4 text-gray-500" /> */}
                                 {row.date ? new Date(row.date).toLocaleString() : "-"}
                             </span>
-                        )} 
+                        )}
                     />
-                    <Column 
-                        rowEditor 
-                        header="Edit" 
-                        style={{ width: '8%' }} 
+                    <Column
+                        rowEditor
+                        header="Edit"
+                        style={{ width: '8%' }}
                     />
                     <Column
                         header="Delete"
                         style={{ width: '8%' }}
                         body={(row: TranscationType) => (
-                            <button  
+                            <button
                                 onClick={() => handleDelete(row._id)}
                                 className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-all"
                                 title="Delete transaction"
                             >
-                                <TrashIcon className="w-5 h-5"/>
+                                <TrashIcon className="w-5 h-5" />
                             </button>
                         )}
                     ></Column>

@@ -5,6 +5,9 @@ import LogService from "./LogService.js";
 import user from '../models/user.js';
 import Alert from "../models/Alert.js";
 import Category from "../models/Category.js";
+import AlertService from "./AlertService.js";
+import mailer from "../mailer/Transport.js";
+
 class BudgetService {
 
     /**
@@ -35,6 +38,19 @@ class BudgetService {
             });
 
             await newBudget.save();
+
+            // Check if budget is already exceeded by existing spending
+            try {
+                await this.checkBudgetExceededOnCreation(
+                    userId,
+                    budgetData.categoryId,
+                    budgetData.month,
+                    budgetData.year,
+                    budgetData.limit
+                );
+            } catch (exceedErr) {
+                console.error("Failed to check budget exceeded on creation", exceedErr);
+            }
 
             // create audit log for budget creation
             try {
@@ -125,6 +141,21 @@ class BudgetService {
                 updatedData,
                 { new: true }
             );
+
+            // Check if budget is already exceeded by existing spending (especially if limit was updated)
+            if (updatedData.limit) {
+                try {
+                    await this.checkBudgetExceededOnCreation(
+                        updated.userId,
+                        updated.categoryId,
+                        updated.month,
+                        updated.year,
+                        updatedData.limit
+                    );
+                } catch (exceedErr) {
+                    console.error("Failed to check budget exceeded on update", exceedErr);
+                }
+            }
 
             try {
                 const category = await Category.findById(updated?.categoryId);
@@ -298,7 +329,6 @@ class BudgetService {
             userId,
             month: currentMonth+1,
             year: currentYear,
-            isDelete: false
         });
 
         const existingCategories = new Set(
@@ -375,7 +405,7 @@ class BudgetService {
                     }
                 }
             ]);
-
+        
             const spent = expenses.length ? expenses[0].totalSpent : 0;
             // console.log(expenses);
             const budget = await Budget.findOne({
@@ -397,6 +427,96 @@ class BudgetService {
             };
 
         } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Check if a budget is already exceeded by existing spending.
+     * Creates an alert and sends an email if the budget limit is exceeded.
+     * @param {string} userId - The ID of the user
+     * @param {string} categoryId - The ID of the category
+     * @param {number} month - The month (1-12)
+     * @param {number} year - The year
+     * @param {number} limit - The budget limit
+     * @returns {Promise<boolean>} True if budget is exceeded, false otherwise
+     * @throws {Error} If check fails
+     */
+    async checkBudgetExceededOnCreation(userId, categoryId, month, year, limit) {
+        try {
+            // Calculate spending for the specified month/year/category
+            const start = new Date(year, month - 1, 1);
+            const next = new Date(year, month, 1);
+
+            const spendingAgg = await Transaction.aggregate([
+                {
+                    $match: {
+                        userId: new mongoose.Types.ObjectId(userId),
+                        category: new mongoose.Types.ObjectId(categoryId),
+                        type: "expense",
+                        isDelete: false,
+                        date: { $gte: start, $lt: next }
+                    }
+                },
+                { $group: { _id: null, total: { $sum: "$amount" } } }
+            ]);
+
+            const currentSpending = spendingAgg[0]?.total || 0;
+
+            // If spending exceeds the limit, send alert and email
+            if (currentSpending > limit) {
+                const category = await Category.findById(categoryId);
+                const userDoc = await user.findById(userId);
+
+                const exceededAmount = (currentSpending - limit).toFixed(2);
+                const percentageExceeded = ((currentSpending / limit) * 100 - 100).toFixed(1);
+
+                // Create alert
+                const message = `⚠️ Budget Alert! Your current spending in ${category?.name || "this category"} (₹${currentSpending.toFixed(2)}) exceeds the budget limit of ₹${limit}.`;
+                
+                try {
+                    await AlertService.CreateAlert(userId, "budget_exceeded", message);
+                } catch (alertErr) {
+                    console.error("Failed to create budget exceeded alert", alertErr);
+                }
+
+                // Send email
+                try {
+                    await mailer.emails.send({
+                        from: '"MoneyMint" <fincons@moneymint.tech>',
+                        to: userDoc?.email,
+                        subject: "🚨 Budget Already Exceeded - MoneyMint",
+                        html: `
+                            <div style="font-family: Arial, sans-serif; background-color:#f5f7fa; padding:20px;">
+                                <div style="max-width:600px; margin:auto; background:#ffffff; padding:30px; border-radius:10px; box-shadow:0 3px 12px rgba(0,0,0,0.1); text-align:center;">
+                                    <h2 style="color:#e74c3c; margin-bottom:10px;">🚨 Budget Already Exceeded!</h2>
+                                    <p style="font-size:16px; color:#555;">Hello <b>${userDoc?.name || "User"}</b>,</p>
+                                    <p style="font-size:15px; color:#555; line-height:1.6;">Your current spending in the category <b>${category?.name}</b> has already exceeded the budget limit you just set.</p>
+                                    <div style="background:#fff3cd; border-radius:8px; padding:15px; margin-top:20px; border-left:4px solid #ff6b6b;">
+                                        <p style="margin:6px 0; font-size:15px;"><b>Category:</b> ${category?.name}</p>
+                                        <p style="margin:6px 0; font-size:15px;"><b>Budget Limit:</b> ₹${limit}</p>
+                                        <p style="margin:6px 0; font-size:15px;"><b>Current Spending:</b> ₹${currentSpending.toFixed(2)}</p>
+                                        <p style="margin:6px 0; font-size:15px; color:#e74c3c;"><b>Amount Exceeded:</b> ₹${exceededAmount} (${percentageExceeded}%)</p>
+                                    </div>
+                                    <p style="margin-top:20px; font-size:15px; color:#555;">Please review your expenses and consider adjusting your budget or reducing spending in this category.</p>
+                                    <a href="${process.env.FRONTEND_URL || '#'}" style="display:inline-block; margin-top:20px; padding:12px 25px; background:#e74c3c; color:#ffffff; text-decoration:none; border-radius:6px; font-size:15px; font-weight:bold;">View Dashboard</a>
+                                    <hr style="margin:30px 0;">
+                                    <p style="font-size:12px; color:#888;">© ${new Date().getFullYear()} MoneyMint • Smart Expense Management</p>
+                                </div>
+                            </div>
+                        `
+                    });
+                } catch (mailErr) {
+                    console.error('Budget exceeded email send failed', mailErr);
+                }
+
+                return true;
+            }
+
+            return false;
+
+        } catch (error) {
+            console.error('checkBudgetExceededOnCreation error', error);
             throw error;
         }
     }

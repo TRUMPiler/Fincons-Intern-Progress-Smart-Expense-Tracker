@@ -63,7 +63,7 @@ const Navbar = () => {
             to={item.path}
             className={`relative text-sm font-medium transition ${
               location.pathname === item.path
-                ? "text-blue-500"
+                ? "text-pink-900"
                 : "text-gray-600 dark:text-gray-300 hover:text-blue-500"
             }`}
           >

@@ -1,9 +1,10 @@
 
 import api from '../lib/axiosInstance';
 import authService from '../lib/authService';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Toast } from 'primereact/toast';
 import { Password } from 'primereact/password';
+import { useNavigate } from 'react-router';
 type FormState = {
 	email: string;
 	password: string;
@@ -27,12 +28,18 @@ export default function Login() {
 	const [loading, setLoading] = useState(false);
 	const [message, setMessage] = useState<string | null>(null);
 	const toast = useRef<Toast | null>(null);
+	const Navigate=useNavigate();
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
 		setForm(prev => ({ ...prev, [name as keyof FormState]: value }));
 		setErrors(prev => ({ ...prev, [name as keyof FormState]: undefined }));
 	};
-
+	useEffect(()=>{
+		if(localStorage.getItem("user"))
+		{
+			Navigate("/");
+		}
+	},[])
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		const newErrors: Partial<FormState> = {};

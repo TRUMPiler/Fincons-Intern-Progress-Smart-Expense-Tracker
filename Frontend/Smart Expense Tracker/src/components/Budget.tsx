@@ -151,6 +151,24 @@ const Budget: FC = () => {
     });
   }
 
+  const handleDelete = (budgetId: string, categoryName: string) => {
+    if (confirm(`Are you sure you want to delete the budget for ${categoryName}?`)) {
+      api.delete(`/api/budget/${budgetId}`, {
+        headers: {
+          Accept: "application/json"
+        }
+      }).then((response) => {
+        if (response.status === 200) {
+          setBudgets((prev) => prev.filter((b) => b._id !== budgetId));
+          toast.current?.show({ severity: "success", summary: "Budget Deleted", detail: `Budget for ${categoryName} has been deleted` });
+        }
+      }).catch((err) => {
+        console.error(err);
+        toast.current?.show({ severity: "error", summary: "Delete failed", detail: String(err) });
+      });
+    }
+  }
+
   const handleSubmit = () => {
     api.post(`/api/budget`, {
       userId: sessionStorage.getItem("id"),
@@ -468,18 +486,26 @@ const Budget: FC = () => {
                       </div>
 
                       {/* Action Button */}
-                      <button 
-                        className="w-full bg-linear-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg mt-4" 
-                        onClick={() => {
-                          setUpdateBudgetDialogVisible(true);
-                          setBudgetCategory(budget.categoryId ? budget.categoryId : "");
-                          setLimit(budget.limit);
-                          setBudgetId(budget._id);
-                          setisRecurring(budget.isRecurring)
-                        }}
-                      >
-                        ✏️ Update Budget
-                      </button>
+                      <div className="flex gap-2 mt-4">
+                        <button 
+                          className="flex-1 bg-linear-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg" 
+                          onClick={() => {
+                            setUpdateBudgetDialogVisible(true);
+                            setBudgetCategory(budget.categoryId ? budget.categoryId : "");
+                            setLimit(budget.limit);
+                            setBudgetId(budget._id);
+                            setisRecurring(budget.isRecurring)
+                          }}
+                        >
+                          ✏️ Update
+                        </button>
+                        <button 
+                          className="flex-1 bg-linear-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg" 
+                          onClick={() => handleDelete(budget._id, budget.categoryName ?? '')}
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </Card>

@@ -349,7 +349,7 @@ const Transcation: FC<TransactionProp> = ({transcations,setTranscations}:Transac
                 <button className="bg-indigo-500 p-2 text-white rounded-lg dark:border dark:border-white" onClick={()=>setAddTranscationVisible(true)}>Add Transcation</button>
             </div>
             <DataTable removableSort paginator rows={5} value={transcations} stripedRows editMode="row" dataKey="_id" className="w-full border border-black dark:border dark:border-white" onRowEditComplete={onRowEditComplete}>
-                <Column field="amount" header="Amount" editor={amountEditor}  body={priceBodyTemplate}/>
+                <Column field="amount" header="Amount" editor={amountEditor} sortable  body={priceBodyTemplate}/>
                 <Column
                     field="category"
                  

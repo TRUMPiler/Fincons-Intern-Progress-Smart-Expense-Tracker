@@ -46,13 +46,15 @@ class BudgetService {
             throw error;
         }
     }
+
     async getBudgetMonths(userId) {
         try {
             console.log("userId:" + userId);
             const months = await Budget.aggregate([
                 {
                     $match: {
-                        userId: new mongoose.Types.ObjectId(userId)
+                        userId: new mongoose.Types.ObjectId(userId),
+                        isDelete: false
                     },
                 },
                 {
@@ -98,7 +100,7 @@ class BudgetService {
                 { new: true }
             );
 
-            // log budget update
+       
             try {
                 const action = `User ${updated?.userId} updated budget ${updated?._id} to limit ₹${updated?.limit}`;
                 await LogService.CreateLog(updated?.userId, action, {
@@ -123,7 +125,7 @@ class BudgetService {
             console.log(month);
             console.log(year);
             console.log(userId);
-            const budgets = await Budget.find({ userId, month: month, year: year })
+            const budgets = await Budget.find({ userId, month: month, year: year, isDelete: false })
                 .populate("categoryId", "name");
             // console.log("Budgets:"+budgets);
             return budgets;
@@ -140,7 +142,8 @@ class BudgetService {
                 userId,
                 categoryId,
                 month,
-                year
+                year,
+                isDelete: false
             });
 
             return budget;
@@ -154,7 +157,16 @@ class BudgetService {
         try {
 
             const budget = await Budget.findById(budgetId);
-            const deleted = await Budget.findByIdAndDelete(budgetId);
+            
+            // Soft delete: mark as deleted and set deletedAt timestamp
+            const deleted = await Budget.findByIdAndUpdate(
+                budgetId,
+                { 
+                    isDelete: true, 
+                    deletedAt: new Date() 
+                },
+                { new: true }
+            );
 
             try {
                 const action = `User ${budget?.userId} deleted budget ${budget?._id} for category ${budget?.categoryId}`;
@@ -199,7 +211,8 @@ class BudgetService {
             userId,
             month: lastMonth,
             year: lastYear,
-            isRecurring: true
+            isRecurring: true,
+            isDelete: false
         });
         console.log("last months "+lastMonth);
         if (!lastMonthBudgets.length) {
@@ -209,7 +222,8 @@ class BudgetService {
         const currentBudgets = await Budget.find({
             userId,
             month: currentMonth+1,
-            year: currentYear
+            year: currentYear,
+            isDelete: false
         });
 
         const existingCategories = new Set(
@@ -283,7 +297,8 @@ class BudgetService {
                 userId: userId,
                 categoryId: categoryId,
                 month: month - 1,
-                year: year
+                year: year,
+                isDelete: false
             });
             // console.log(budget);
             if (!budget) {

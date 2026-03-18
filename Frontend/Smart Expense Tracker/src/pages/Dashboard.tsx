@@ -11,7 +11,6 @@ import { Toast } from "primereact/toast";
 import { confirmDialog, ConfirmDialog } from "primereact/confirmdialog";
 import { Button } from "primereact/button";
 import { Dropdown } from 'primereact/dropdown';
-import { ProgressSpinner } from "primereact/progressspinner";
 import SummaryCard from "../components/SummaryCard";
 import IncomeExpense from "../components/IncomeExpense";
 import CategorySpending from "../components/CategorySpending";
@@ -58,6 +57,7 @@ const DashboardL: FC = () => {
     // budgets are sourced from the charts slice in the store
     const Months: string[] = ["January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const [chartData, setChartData] = useState<any | null>(null);
+    const [loadCharts,setLoadCharts]=useState<boolean>(false);
     const [chartOptions, setChartOptions] = useState<any | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [predictExpense, setPredictExpense] = useState<number | string | null>(0);
@@ -163,6 +163,7 @@ const DashboardL: FC = () => {
     }, [,useDashboard.month,useDashboard.year]);
 
     useEffect(() => {
+        setLoadCharts(true);
         const userid = sessionStorage.getItem('id')
         if (!userid) {
             setLoading(false)
@@ -176,7 +177,7 @@ const DashboardL: FC = () => {
         dispatch(fetchMonthlyTrend({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchCategorySpending({ month: useDashboard.month, year: useDashboard.year }))
         dispatch(fetchTotals({ month: useDashboard.month, year: useDashboard.year }))
-    }, [transcations,dispatch, useDashboard.month, useDashboard.year])
+    }, [transcations, dispatch, useDashboard.month, useDashboard.year])
 
 
     useEffect(() => {
@@ -359,6 +360,7 @@ const DashboardL: FC = () => {
         if (allDataLoaded) {
             setLoading(false);
         }
+        setLoadCharts(false);
     }, [charts.financialHealth, charts.categorySpending, charts.totals, charts.monthlyTrend, charts.Alerts]);
       const DisplayDate = useMemo(() => {
             let ShowDate = currentMonth;
@@ -378,20 +380,15 @@ const DashboardL: FC = () => {
             if(label === "poor") return "text-red-600 dark:text-red-400";
             return "text-gray-600 dark:text-gray-400";
         }
-
+        useEffect(()=>{
+            console.log(loadCharts);
+        },
+    [loadCharts])
 
     return (
        
         <div className="flex flex-col items-center w-full min-h-screen gap-6 py-8 px-4 bg-gray-200  dark:bg-none dark:bg-black ">
          <Toast ref={toast}/>
-            {!isInitialized && (
-                <div className="fixed inset-0 bg-white/80 dark:bg-black/80 flex items-center justify-center z-50">
-                    <div className="flex flex-col items-center gap-4">
-                        <ProgressSpinner strokeWidth="4" fill="var(--surface-card)" animationDuration=".5s" />
-                        <p className="text-gray-700 dark:text-gray-300 font-medium">Initializing Dashboard...</p>
-                    </div>
-                </div>
-            )}
             {loading && (
                 <div className="w-full max-w-7xl fixed top-0 left-0 right-0 z-50">
                     <ProgressBar value={100} showValue={false} style={{ height: '4px' }} className="bg-indigo-500" />
@@ -476,6 +473,7 @@ const DashboardL: FC = () => {
                     </Card>
                 </div>
             ) : (dashboardView==="Overview"?(<>
+            
                <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading}  predictExpense={predictExpense} />
 
                 <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions} breakdown={fiananceHealth.breakdown} summary={fiananceHealth.summary}/>

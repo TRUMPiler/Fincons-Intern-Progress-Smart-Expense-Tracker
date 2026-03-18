@@ -20,6 +20,20 @@ class AlertService
         throw new Error(error);
       }
     }
+    async CreateAlert(userId, type, message) {
+        try {
+            const alert = await Alert.create({
+                userId,
+                type,
+                message,
+                isRead: false
+            });
+            return alert;
+        } catch (error) {
+            console.error("Failed to create alert", error);
+            throw error;
+        }
+    }
    async UpdateAlert(_id)
     {
         try{

@@ -31,6 +31,14 @@ const budgetSchema = new mongoose.Schema(
   isRecurring:{
     type:Boolean,
     default:false
+  },
+  isDelete:{
+    type:Boolean,
+    default:false
+  },
+  deletedAt:{
+    type:Date,
+    default:null
   }
 },
 {

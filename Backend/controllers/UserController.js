@@ -31,9 +31,7 @@ class UserController {
     async Register(req, res, next) {
         try {
             const UserRegister = await UserService.createUser(req.body);
-            if (!UserRegister) {
-                res.status(200).json(Response.success(null, "Registration Successfull", 200));
-            }
+           
             res.status(200).json(Response.success({ UserRegister }, "Registration Successfull", 200));
             (async () => {
                 const info = await mailer.emails.send({
@@ -82,7 +80,7 @@ class UserController {
   </div>
   `
                 });
-                console.log("Message sent:", info.messageId);
+                // console.log("Message sent:", info.messageId);
             })();
         }
         catch (error) {

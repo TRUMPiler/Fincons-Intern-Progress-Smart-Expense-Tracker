@@ -16,6 +16,7 @@ import IncomeExpense from "../components/IncomeExpense";
 import CategorySpending from "../components/CategorySpending";
 import BudgetMeters from "../components/BudgetMeters";
 import { SelectButton } from "primereact/selectbutton";
+import ArturoGif from "../assets/Ai Image.gif";
 
 type CategoryProp = {
     name: string;
@@ -117,7 +118,7 @@ const DashboardL: FC = () => {
     const reject = () => {
         toast.current?.show({ severity: 'warn', summary: 'Remind Again', detail: 'You will Reminded again about this', life: 3000 });
     }
-    const confirm = (position:any,message:string,header:string,alertid:string) => {
+    const confirm = (_position:any,message:string,header:string,alertid:string) => {
         const messages= (
                 <div className="flex flex-column align-items-center w-full  border-bottom-1 surface-border">
                     {/* <i className="pi pi-exclamation-circle text-6xl text-primary-500"></i> */}
@@ -128,7 +129,7 @@ const DashboardL: FC = () => {
               group: 'headless',
               message:[messages],
             header:header.toUpperCase(),
-            position,
+    
         
             accept:()=>accepted(alertid),
             reject
@@ -414,32 +415,59 @@ const DashboardL: FC = () => {
     [loadCharts])
 
     return (
-       
-        <div className="flex flex-col items-center w-full min-h-screen gap-6 py-8 px-4 bg-gray-200  dark:bg-none dark:bg-black ">
-         <Toast ref={toast}/>
+        <div className="flex flex-col items-center w-full min-h-screen bg-gray-50 dark:bg-slate-950 py-8 px-4">
+            <Toast ref={toast} />
             {loading && (
                 <div className="w-full max-w-7xl fixed top-0 left-0 right-0 z-50">
                     <ProgressBar value={100} showValue={false} style={{ height: '4px' }} className="bg-indigo-500" />
                 </div>
             )}
-            <div className={`w-full max-w-7xl  mt-7 transition-all duration-300 ${loading ? 'opacity-60 pointer-events-none blur-sm' : 'opacity-100'}`}>
-                
-                <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-                         <div>
-                        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-indigo-300">Dashboard</h1>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Overview · {DisplayDate}</p>
-                        {fiananceHealth.label && (transcations.length > 0 || loading) && (
-                            <p className={`text-lg font-semibold ${getHealthColor()}`}>
+            <div className={`w-full max-w-7xl mt-8 transition-all duration-300 ${loading ? 'opacity-60 pointer-events-none blur-sm' : 'opacity-100'}`}>
+                {/* Title & Health Section */}
+                <div className="mb-6">
+                    <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-1">Dashboard</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Overview · {DisplayDate}</p>
+                    {fiananceHealth.label && (transcations.length > 0 || loading) && (
+                        <div className="inline-block px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800">
+                            <p className={`text-sm font-semibold ${getHealthColor()}`}>
                                 Financial Health: {fiananceHealth.label} ({fiananceHealth.score}/100)
                             </p>
-                        )}
-                    </div>
-                <SelectButton options={options} value={dashboardView} onChange={(e:any)=>setDashboardView(e.value)} />
-                <div className="flex gap-2 ml-4 flex-col  md:flex-row">
-                    <Dropdown disabled={loading} options={dynamicMonthOptions} optionLabel="label" optionValue="value" value={useDashboard.month} onChange={(e:any)=>useDashboard.setMonth(e.value)} placeholder="Month" className="bg-white" />
-                    <Dropdown disabled={loading} options={dynamicYearOptions} optionLabel="label" optionValue="value" value={useDashboard.year} onChange={(e:any)=>useDashboard.setYear(e.value)} placeholder="Year" className="bg-white" />
+                        </div>
+                    )}
                 </div>
-            <ConfirmDialog
+
+                {/* Controls Section */}
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg rounded-lg shadow-sm border border-gray-200/50 dark:border-slate-700/50">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <Dropdown
+                            disabled={loading}
+                            options={dynamicMonthOptions}
+                            optionLabel="label"
+                            optionValue="value"
+                            value={useDashboard.month}
+                            onChange={(e: any) => useDashboard.setMonth(e.value)}
+                            placeholder="Select Month"
+                            className="w-full sm:w-40 bg-gray-50 dark:bg-slate-800 border-gray-300 dark:border-slate-600"
+                        />
+                        <Dropdown
+                            disabled={loading}
+                            options={dynamicYearOptions}
+                            optionLabel="label"
+                            optionValue="value"
+                            value={useDashboard.year}
+                            onChange={(e: any) => useDashboard.setYear(e.value)}
+                            placeholder="Select Year"
+                            className="w-full sm:w-40 bg-gray-50 dark:bg-slate-800 border-gray-300 dark:border-slate-600"
+                        />
+                    </div>
+                    <SelectButton
+                        options={options}
+                        value={dashboardView}
+                        onChange={(e: any) => setDashboardView(e.value)}
+                        className="w-full lg:w-auto"
+                    />
+                </div>
+                <ConfirmDialog
                 group="headless"
                 content={({ headerRef, contentRef, footerRef, hide, message }) => (
                     
@@ -491,36 +519,39 @@ const DashboardL: FC = () => {
                     </div>
                 )}
             />
-               
-                </div>
             {transcations.length === 0 && (!loading||!isInitialized) ? (
-                <div className="w-full flex items-center justify-center py-16">
-                    <Card className="p-8 shadow rounded-lg text-center max-w-md dark:border dark:border-white">
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2 dark:text-white">No Data Available</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">No transactions available for the selected month. Please choose another month or year.</p>
+                <div className="w-full flex items-center justify-center py-20">
+                    <Card className="p-8 shadow-md rounded-lg text-center max-w-md bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-gray-200/50 dark:border-slate-700/50">
+                        <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Data Available</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">No transactions available for the selected month. Please choose another month or year.</p>
                     </Card>
                 </div>
             ) : dashboardView === "Financial Overview" ? (
-                <>
-                    <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading}  predictExpense={predictExpense} />
+                <div className="space-y-6">
+                    <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading} predictExpense={predictExpense} />
 
-                    <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions} breakdown={fiananceHealth.breakdown} summary={fiananceHealth.summary}/>
+                    <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions} breakdown={fiananceHealth.breakdown} summary={fiananceHealth.summary} />
                     
                     <CategorySpending loading={loading} chartBarData={chartBarData} chartBarOptions={chartBarOptions} categoryOptions={categoryOptions} chartMonthlyData={chartMonthlyData} chartMonthlyOptions={chartMonthlyOptions} transcations={transcations} setTranscation={setTranscations} />
 
-                    <Card className="p-4 shadow rounded-lg dark:border dark:border-white mt-4">
-                        <h3 className="text-lg font-semibold text-gray-700 mb-2 dark:text-white">Recent Transactions</h3>
+                    <Card className="p-6 shadow-sm rounded-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Transactions</h3>
                         {recentTransactions.length === 0 ? (
-                            <p className="text-sm text-gray-500">No recent transactions</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">No recent transactions</p>
                         ) : (
-                            <div className="divide-y">
+                            <div className="space-y-2">
                                 {recentTransactions.map((t) => (
-                                    <div key={t._id} className="flex items-center justify-between py-2">
-                                        <div>
-                                            <div className="text-sm font-medium">{t.description ?? t.category?.name ?? 'No description'}</div>
-                                            <div className="text-xs text-gray-500">{t.date ? new Date(t.date).toLocaleDateString() : ''}</div>
+                                    <div key={t._id} className="flex items-center justify-between py-3 px-2 hover:bg-gray-50 dark:hover:bg-slate-800 rounded transition-colors">
+                                        <div className="flex-1">
+                                            <div className="text-sm font-medium text-gray-900 dark:text-white">{t.description ?? t.category?.name ?? 'No description'}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t.date ? new Date(t.date).toLocaleDateString() : ''}</div>
                                         </div>
-                                        <div className={t.type === 'expense' ? 'text-red-500 font-semibold' : 'text-green-500 font-semibold'}>
+                                        <div className={t.type === 'expense' ? 'text-red-600 dark:text-red-400 font-semibold text-sm' : 'text-green-600 dark:text-green-400 font-semibold text-sm'}>
                                             {t.amount ? t.amount.toLocaleString('en-US', { style: 'currency', currency: 'INR' }) : ''}
                                         </div>
                                     </div>
@@ -528,22 +559,30 @@ const DashboardL: FC = () => {
                             </div>
                         )}
                     </Card>
-                </>
+                </div>
             ) : dashboardView == "Budget Overview" ? (
-                <>
-                    <BudgetMeters loading={loading} charts={charts} chartData={chartData}/>
-                    {/* <Card className="p-4 shadow rounded-lg dark:border dark:border-white">
-                        <h3 className="text-lg font-semibold text-gray-700 mb-4 dark:text-white">Transactions</h3>
-                        <Transcation transcations={transcations} setTranscations={setTranscations} />
-                    </Card> */}
-                </>
+                <div>
+                    <BudgetMeters loading={loading} charts={charts} />
+                </div>
             ) : (
-                <Card className="p-4 shadow rounded-lg dark:border dark:border-white">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-4 dark:text-white">Transactions</h3>
+                <Card className="p-6 shadow-sm rounded-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">All Transactions</h3>
                     <Transcation transcations={transcations} setTranscations={setTranscations} />
                 </Card>
             )}
             </div>
+
+            {/* Fixed Arturo Chat Button */}
+            <button
+                onClick={() => window.location.href = '/chat'}
+                className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-linear-to-r from-indigo-500 to-purple-600 text-white shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 flex items-center justify-center group z-40 dark:from-indigo-600 dark:to-purple-700"
+                title="Ask Arturo for Advice"
+                aria-label="Ask Arturo"
+            >
+                <div className="absolute inset-0 rounded-full bg-linear-to-r from-indigo-400 to-purple-500 opacity-0 group-hover:opacity-40 blur-xl transition-opacity"></div>
+                <img src={ArturoGif} alt="Arturo" className="w-10 h-10 rounded-full relative z-10 object-cover" />
+                <span className="absolute -top-10 right-1 opacity-0 group-hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded-md bg-black text-white whitespace-nowrap">Ask Arturo</span>
+            </button>
         </div>
     );
 };

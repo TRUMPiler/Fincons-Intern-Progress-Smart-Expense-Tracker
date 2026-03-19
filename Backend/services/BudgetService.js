@@ -25,7 +25,8 @@ class BudgetService {
                 userId: userId,
                 categoryId: budgetData.categoryId,
                 month: budgetData.month,
-                year: budgetData.year
+                year: budgetData.year,
+                isDelete:false
             });
 
             if (existingBudget) {

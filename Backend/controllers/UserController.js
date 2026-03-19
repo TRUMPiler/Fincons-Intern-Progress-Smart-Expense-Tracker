@@ -162,6 +162,73 @@ class UserController {
             next(error);
         }
     }
+
+    /**
+     * Get current logged-in user's profile.
+     * Requires authentication middleware to set req.userId.
+     */
+    async GetProfile(req, res, next) {
+        try {
+            const userId = req.userId || req.params.id;
+            const user = await UserService.getUserById(userId);
+            return res.status(200).json(Response.success({ user: { _id: user._id, name: user.name, email: user.email, isVerified: user.isVerified } }, "User profile fetched", 200));
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Update logged-in user's profile (name, email, password).
+     * If email changed, mark unverified, clear refresh token cookie and send verification email.
+     */
+    async UpdateProfile(req, res, next) {
+        try {
+            const userId = req.userId;
+            const updates = req.body || {};
+
+            const result = await UserService.updateUser(userId, updates);
+            const updatedUser = result.user;
+
+            if (result.emailChanged) {
+                // send verification email asynchronously
+                (async () => {
+                    try {
+                        await mailer.emails.send({
+                            from: '"MoneyMint" <fincons@moneymint.tech>',
+                            to: updatedUser.email,
+                            subject: 'Verify your new email address',
+                            text: 'Please verify your email address to re-activate your account.',
+                            html: `
+  <div style="font-family: Arial, sans-serif; background-color:#f4f4f4; padding:20px;">
+    <div style="max-width:600px; margin:auto; background:white; padding:30px; border-radius:10px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+      <h2 style="color:#2c3e50;">Verify your new email</h2>
+      <p style="font-size:16px; color:#555;">You recently changed your account email. Please verify the new address to continue using MoneyMint.</p>
+      <a href="${process.env.FRONTEND_URL}/verify/${updatedUser._id}" style="display:inline-block; margin-top:20px; padding:12px 25px; background-color:#28a745; color:white; text-decoration:none; border-radius:6px; font-size:16px; font-weight:bold;">Verify Email</a>
+      <p style="margin-top:30px; font-size:14px; color:#888;">If you did not request this change, contact support immediately.</p>
+    </div>
+  </div>
+  `
+                        });
+                    } catch (err) {
+                        console.error("Failed to send verification email:", err);
+                    }
+                })();
+
+                // invalidate refresh token cookie so user must re-login/verify
+                res.clearCookie('refreshToken', { httpOnly: true, path: '/' });
+
+                return res.status(200).json(Response.success({ user: { _id: updatedUser._id, name: updatedUser.name, email: updatedUser.email }, emailChanged: true }, "Email changed; verification required", 200));
+            }
+
+            return res.status(200).json(Response.success({ user: { _id: updatedUser._id, name: updatedUser.name, email: updatedUser.email } }, "Profile updated", 200));
+        } catch (error) {
+            // Handle duplicate key error
+            if (error.code === 11000) {
+                return res.status(409).json(Response.error("Email already exists", 409));
+            }
+            next(error);
+        }
+    }
 }
 
 export default new UserController();

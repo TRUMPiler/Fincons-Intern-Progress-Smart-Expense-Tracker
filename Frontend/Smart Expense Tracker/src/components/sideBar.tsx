@@ -15,7 +15,7 @@ import {
   PanelLeftClose,
   FileText,
   // Users,
-  // Settings,
+  Settings,
   HelpingHand,
   LogOut,
 } from "lucide-react"
@@ -104,10 +104,10 @@ export default function SidebarExample() {
                     </NavLink>
                   </li>
                   <li>
-                    {/* <button onClick={() => { if(!sessionStorage.getItem("id")){toast.current?.show({severity:"error",summary:"Invalid access", detail:"Please Login/Sign-up before updating your profile"}); return;} window.location.href = '/register'; SideBarcontext?.setOpen(false); }} className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-slate-800">
+                    <NavLink to="/profile" onClick={() => SideBarcontext?.setOpen(false)} className={({isActive}: any) => `flex items-center gap-2 p-2 rounded ${isActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-green-500 dark:hover:bg-slate-800'}`}>
                       <Settings size={18} />
                       <span>Update Profile</span>
-                    </button> */}
+                    </NavLink>
                   </li>
                 </ul>
               </nav>

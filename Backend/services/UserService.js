@@ -98,6 +98,77 @@ class UserService {
             throw err;
         }
     }
+
+    /**
+     * Update user profile fields such as name, email and password.
+     * - If email changes, user's isVerified flag is set to false and caller should trigger verification email.
+     * - If password is changed, currentPassword must be provided and verified.
+     * @async
+     * @param {string} id - The user id to update
+     * @param {Object} updates - Fields to update: { name, email, password, currentPassword }
+     * @returns {Promise<Object>} Returns object { user, emailChanged: boolean }
+     * @throws {Error} If user not found, current password mismatch, or email already in use
+     */
+    async updateUser(id, updates) {
+        try {
+            const user = await UserSchema.findById(id);
+            if (!user) {
+                const err = new Error("User not found");
+                err.statusCode = 404;
+                throw err;
+            }
+
+            let emailChanged = false;
+
+            // Email update: check uniqueness and mark unverified
+            if (updates.email && updates.email !== user.email) {
+                const existing = await UserSchema.findOne({ email: updates.email });
+                if (existing && existing._id.toString() !== id) {
+                    const err = new Error("Email already in use");
+                    err.statusCode = 409;
+                    throw err;
+                }
+                user.email = updates.email;
+                user.isVerified = false;
+                emailChanged = true;
+            }
+
+            if (updates.name) {
+                user.name = updates.name;
+            }
+
+            // Password update requires currentPassword verification
+            if (updates.password) {
+                if (!updates.currentPassword) {
+                    const err = new Error("Current password required to change password");
+                    err.statusCode = 400;
+                    throw err;
+                }
+
+                const isMatch = await new Promise((resolve, reject) => {
+                    user.comparePassword(updates.currentPassword, (err, matched) => {
+                        if (err) return reject(err);
+                        resolve(matched);
+                    });
+                });
+
+                if (!isMatch) {
+                    const err = new Error("Current password incorrect");
+                    err.statusCode = 401;
+                    throw err;
+                }
+
+                // assign new password (pre-save hook will hash it)
+                user.password = updates.password;
+            }
+
+            await user.save();
+
+            return { user, emailChanged };
+        } catch (err) {
+            throw err;
+        }
+    }
 }
 
 export default new UserService();

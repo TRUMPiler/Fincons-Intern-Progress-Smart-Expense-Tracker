@@ -14,6 +14,7 @@ import SidebarExample, { type SideBarContextProps } from './components/sideBar'
 import Budget from './components/Budget'
 import Transcation from './components/TransactionOnlyPage'
 import DashboardL from './pages/Dashboard'
+import Profile from './pages/Profile'
 import { PrimeReactProvider } from 'primereact/api'
 import Chat from './pages/Chat'
 import { DashboardContext } from './store/slices/chartsSlice'
@@ -81,6 +82,7 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Registration />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="/budget" element={<Budget />} />
                   <Route path="/dashboard" element={<DashboardL />} />
                   <Route path="/transcation" element={<Transcation />} />

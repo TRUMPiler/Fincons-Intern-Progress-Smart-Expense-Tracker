@@ -15,7 +15,8 @@ import SummaryCard from "../components/SummaryCard";
 import IncomeExpense from "../components/IncomeExpense";
 import CategorySpending from "../components/CategorySpending";
 import BudgetMeters from "../components/BudgetMeters";
-import { SelectButton } from "primereact/selectbutton";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { BarChart3, Wallet, ListChecks } from "lucide-react";
 import ArturoGif from "../assets/Ai Image.gif";
 
 type CategoryProp = {
@@ -86,7 +87,7 @@ const DashboardL: FC = () => {
         savings:0
     }});
     const [dashboardView,setDashboardView]=useState<"Financial Overview"|"Budget Overview"|"Transcations">("Financial Overview");
-    const options=["Financial Overview","Budget Overview","Transcations"];
+    const [chartsMounted, setChartsMounted] = useState(false);
     const [currentAlertIndex, setCurrentAlertIndex] = useState<number | null>(null);
     const dispatch = useAppDispatch();
     let acceptRef=useRef<string>('');
@@ -242,6 +243,20 @@ const DashboardL: FC = () => {
         const monthlyOptionsObj = {
             maintainAspectRatio: false,
             aspectRatio: 0.6,
+            responsive: true,
+            interaction: { mode: 'index' as const, intersect: false },
+            animation: {
+                duration: 750,
+                easing: 'easeInOutQuart' as const,
+                delay: (ctx: any) => {
+                    let delay = 0;
+                    if (ctx.type === 'data') {
+                        delay = ctx.dataIndex * 50;
+                    }
+                    return delay;
+                },
+            },
+            onComplete: () => {},
             plugins: {
                 legend: { labels: { color: rawTextColor } },
             },
@@ -285,6 +300,20 @@ const DashboardL: FC = () => {
         const barOptionsObj = {
             maintainAspectRatio: false,
             aspectRatio: 0.8,
+            responsive: true,
+            interaction: { mode: 'index' as const, intersect: false },
+            animation: {
+                duration: 750,
+                easing: 'easeInOutQuart' as const,
+                delay: (ctx: any) => {
+                    let delay = 0;
+                    if (ctx.type === 'data') {
+                        delay = ctx.dataIndex * 50;
+                    }
+                    return delay;
+                },
+            },
+            onComplete: () => {},
             plugins: {
                 legend: { labels: { color: rawTextColor.trim() || '#111827' } },
             },
@@ -313,6 +342,14 @@ const DashboardL: FC = () => {
         }
 
         const doughnutOptions = {
+            responsive: true,
+            animation: {
+                duration: 750,
+                easing: 'easeInOutQuart' as const,
+                animateScale: true,
+                animateRotate: true,
+            },
+            onComplete: () => {},
             plugins: { legend: { labels: { usePointStyle: true, color: rawTextColor.trim() || '#111827' } } },
             maintainAspectRatio: false,
         }
@@ -333,16 +370,26 @@ const DashboardL: FC = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    // Set loading to false only when both conditions are met
     useEffect(() => {
         if (dataLoaded && minLoadingTimeReached) {
             setLoading(false);
         }
     }, [dataLoaded, minLoadingTimeReached]);
 
+    
+    useEffect(() => {
+        let t: any;
+        if (!loading) {
+            t = setTimeout(() => setChartsMounted(true), 1000); 
+        } else {
+            setChartsMounted(false);
+        }
+        return () => clearTimeout(t);
+    }, [loading]);
+
     useEffect(() => {
         if (charts.availableMonths && charts.availableMonths.length > 0 && !isInitialized) {
-            // Extract unique months and years from available months
+
             const uniqueMonthsSet = new Set(charts.availableMonths.map(m => m.month));
             const uniqueYearsSet = new Set(charts.availableMonths.map(m => m.year));
             
@@ -359,7 +406,7 @@ const DashboardL: FC = () => {
             setDynamicMonthOptions(monthOpts);
             setDynamicYearOptions(yearOpts);
 
-            // Auto-select current month and year only on first load
+ 
             const currentDate = new Date();
             const currentMonth = currentDate.getMonth() + 1;
             const currentYear = currentDate.getFullYear();
@@ -368,7 +415,7 @@ const DashboardL: FC = () => {
                 useDashboard.setMonth(currentMonth);
                 useDashboard.setYear(currentYear);
             } else if (monthOpts.length > 0 && yearOpts.length > 0) {
-                // Fallback to first available month and year
+    
                 useDashboard.setMonth(monthOpts[monthOpts.length - 1].value);
                 useDashboard.setYear(yearOpts[0].value);
             }
@@ -460,12 +507,25 @@ const DashboardL: FC = () => {
                             className="w-full sm:w-40 bg-gray-50 dark:bg-slate-800 border-gray-300 dark:border-slate-600"
                         />
                     </div>
-                    <SelectButton
-                        options={options}
-                        value={dashboardView}
-                        onChange={(e: any) => setDashboardView(e.value)}
-                        className="w-full lg:w-auto"
-                    />
+                    <Tabs value={dashboardView} onValueChange={(val) => setDashboardView(val as "Financial Overview" | "Budget Overview" | "Transcations")} className="w-full lg:w-auto">
+                      <TabsList className="grid w-full lg:w-auto grid-cols-3">
+                        <TabsTrigger value="Financial Overview" className="flex items-center gap-2">
+                          <BarChart3 className="w-4 h-4" />
+                          <span className="hidden sm:inline">Financial Overview</span>
+                          <span className="sm:hidden">Financial</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="Budget Overview" className="flex items-center gap-2">
+                          <Wallet className="w-4 h-4" />
+                          <span className="hidden sm:inline">Budget Overview</span>
+                          <span className="sm:hidden">Budget</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="Transcations" className="flex items-center gap-2">
+                          <ListChecks className="w-4 h-4" />
+                          <span className="hidden sm:inline">Transactions</span>
+                          <span className="sm:hidden">Trans</span>
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
                 </div>
                 <ConfirmDialog
                 group="headless"
@@ -535,9 +595,9 @@ const DashboardL: FC = () => {
                 <div className="space-y-6">
                     <SummaryCard transcations={transcations} loading={loading} setTranscation={setTranscations} setLoading={setLoading} predictExpense={predictExpense} />
 
-                    <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions} breakdown={fiananceHealth.breakdown} summary={fiananceHealth.summary} />
+                    <IncomeExpense transcations={transcations} loading={loading} setTranscation={setTranscations} chartData={chartData} chartOptions={chartOptions} categoryOptions={categoryOptions} breakdown={fiananceHealth.breakdown} summary={fiananceHealth.summary} chartsVisible={chartsMounted as any} />
                     
-                    <CategorySpending loading={loading} chartBarData={chartBarData} chartBarOptions={chartBarOptions} categoryOptions={categoryOptions} chartMonthlyData={chartMonthlyData} chartMonthlyOptions={chartMonthlyOptions} transcations={transcations} setTranscation={setTranscations} />
+                    <CategorySpending loading={loading} chartBarData={chartBarData} chartBarOptions={chartBarOptions} categoryOptions={categoryOptions} chartMonthlyData={chartMonthlyData} chartMonthlyOptions={chartMonthlyOptions} transcations={transcations} setTranscation={setTranscations} chartsVisible={chartsMounted as any} />
 
                     <Card className="p-6 shadow-sm rounded-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Transactions</h3>

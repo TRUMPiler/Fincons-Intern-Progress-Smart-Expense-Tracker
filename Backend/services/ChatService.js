@@ -106,8 +106,8 @@ class ChatService {
 
             const transactionsData = await ChartsService.CategorywiseSpendingChart(userId).catch(() => null);
             const IncomeExpense = await ChartsService.IncomeExpense(userId).catch(() => null);
-
-            const aiReply = await AiInteraction.ChatComplete(conversationHistory, message, transactionsData, IncomeExpense);
+            const predictedExpense=await ChartsService.PredictedExpense(userId).catch(()=>null);
+            const aiReply = await AiInteraction.ChatComplete(conversationHistory, message, transactionsData, IncomeExpense,predictedExpense);
 
             const modelMessage = new Chat({
                 content: aiReply || `Hello ${userData.name}, I couldn't process that right now.`,

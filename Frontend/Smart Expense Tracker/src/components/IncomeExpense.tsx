@@ -1,7 +1,7 @@
 import { Chart } from "primereact/chart";
 import { Card } from "primereact/card";
 import type { TranscationType } from "../pages/Dashboard";
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
 import type { breakdown, summary } from "../store/slices/chartsSlice";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
@@ -14,9 +14,32 @@ type IncomeExpenseProps = {
     categoryOptions: Array<{ label: string; value: string }>;
     breakdown?: breakdown;
     summary?: summary;
+    chartsVisible?: boolean;
 }
-const IncomeExpense = ({ chartData, chartOptions, loading, transcations, breakdown, summary }: IncomeExpenseProps) => {
+const IncomeExpense = ({ chartData, chartOptions, loading, transcations, breakdown, summary, chartsVisible }: IncomeExpenseProps) => {
     const [visible,setVisible]=useState<boolean>(false);
+    const [localChartData, setLocalChartData] = useState<any | null>(null);
+
+    useEffect(() => {
+        if (!chartsVisible) {
+            setLocalChartData(null);
+            return;
+        }
+        if (chartData) {
+            try {
+                const zeroed = JSON.parse(JSON.stringify(chartData));
+                if (zeroed.datasets && Array.isArray(zeroed.datasets)) {
+                    zeroed.datasets = zeroed.datasets.map((d: any) => ({ ...d, data: (d.data || []).map(() => 0) }));
+                }
+                // mount with zeroed data, then update to real data to trigger animation
+                setLocalChartData(zeroed);
+                const t = setTimeout(() => setLocalChartData(chartData), 1000);
+                return () => clearTimeout(t);
+            } catch (e) {
+                setLocalChartData(chartData);
+            }
+        }
+    }, [chartsVisible, chartData]);
     return (
         <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mb-4">
      <Dialog 
@@ -93,9 +116,11 @@ const IncomeExpense = ({ chartData, chartOptions, loading, transcations, breakdo
                 <div className="flex-1 flex items-center justify-center w-full">
                     {loading ? (
                         <div className="text-gray-500 dark:text-white">Loading chart...</div>
-                    ) : chartData ? (
+                    ) : !chartsVisible ? (
+                        <div className="text-gray-500 dark:text-white">Preparing chart...</div>
+                    ) : localChartData ? (
                         <div className="w-[60vh] h-15rem px-4">
-                            <Chart type="doughnut" data={chartData} options={chartOptions} />
+                            <Chart key={`${chartsVisible ? 'ready' : 'hidden'}-${JSON.stringify(localChartData)}`} type="doughnut" data={localChartData} options={chartOptions} />
                         </div>
                     ) : (
                         <div className="text-gray-500 dark:text-white">No chart data</div>

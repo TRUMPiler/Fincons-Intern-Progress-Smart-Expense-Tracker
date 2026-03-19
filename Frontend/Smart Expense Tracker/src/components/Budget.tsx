@@ -110,6 +110,11 @@ const Budget: FC = () => {
   }, [,filterMonth,filterYear]);
 
    const handleUpdate = () => {
+    if(Number(limit)<=0||Number(limit)>=10000000)
+    {
+      toast?.current?.show({severity:"error",summary:"Invalid Limit ",detail:"Limit cannot be less than or equal to zero or 10 crores"})
+      return;
+    }
     api.put(`/api/budget/`+budgetId, {
       userId: sessionStorage.getItem("id"),
       categoryId: budgetCategory,
@@ -170,6 +175,34 @@ const Budget: FC = () => {
   }
 
   const handleSubmit = () => {
+
+
+    const createMonth = new Date().getMonth() + 1;
+    const createYear = new Date().getFullYear();
+    const catId = getCategoryId(budgetCategory);
+
+    if (!catId) {
+      toast?.current?.show({ severity: "error", summary: "Category required", detail: "Please select a category before creating a budget" });
+      return;
+    }
+
+   
+    const duplicate = budgets.some((b) => {
+      const existingCatId = getCategoryId(b.categoryId);
+      return !(b as any).isDelete && existingCatId === catId && b.month === createMonth && b.year === createYear;
+    });
+
+    if (duplicate) {
+      const label = budgetCategoryOptions.find((o) => o.value === catId)?.label || 'this category';
+      toast?.current?.show({ severity: 'warn', summary: 'Budget Exists', detail: `A budget for ${label} already exists for ${Months[createMonth - 1]} ${createYear}` });
+      return;
+    }
+
+    if(Number(limit)<=0||Number(limit)>=10000000)
+    {
+      toast?.current?.show({severity:"error",summary:"Invalid Limit ",detail:"Limit cannot be less than or equal to zero or 10 crores"})
+      return;
+    }
     api.post(`/api/budget`, {
       userId: sessionStorage.getItem("id"),
       categoryId: budgetCategory,

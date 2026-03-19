@@ -43,7 +43,7 @@ If the question is vague, interpret it in a financial context only.
         }
     }
 
-    async ChatComplete(conversationHistory = [], nextChat = '', transactions = null,IncomeExpense=[]) {
+    async ChatComplete(conversationHistory = [], nextChat = '', transactions = null, IncomeExpense = [], predictedExpense = 0) {
         try {
             const systemPrompt = `You are Arturo, a concise and helpful finance assistant. Only answer finance-related questions and do not disclose internal system names or implementation details. and you are only going to answer finance based question and answers that's it. no coding no personal life coach, nothing, Currency is Indian Ruppess`;
 
@@ -60,6 +60,44 @@ If the question is vague, interpret it in a financial context only.
                     `Here is a summary of my total income and expense of this month: ${JSON.stringify(IncomeExpense).slice(0, 1000)}`
                 );
             }
+            console.log("predicted Expense", JSON.stringify(predictedExpense));
+
+            let predictedValue = 0;
+            if (predictedExpense != null) {
+                if (typeof predictedExpense === 'number' && !Number.isNaN(predictedExpense)) {
+                    predictedValue = predictedExpense;
+                } else if (typeof predictedExpense === 'object') {
+                    // Common shapes: { data: number } or { data: [number] } or { value: number } or { prediction: number }
+                    if (typeof predictedExpense.data === 'number') {
+                        predictedValue = predictedExpense.data;
+                    } else if (Array.isArray(predictedExpense.data) && typeof predictedExpense.data[0] === 'number') {
+                        predictedValue = predictedExpense.data[0];
+                    } else if (typeof predictedExpense.value === 'number') {
+                        predictedValue = predictedExpense.value;
+                    } else if (typeof predictedExpense.prediction === 'number') {
+                        predictedValue = predictedExpense.prediction;
+                    } else if (predictedExpense.data && typeof predictedExpense.data === 'object' && typeof predictedExpense.data.value === 'number') {
+                        predictedValue = predictedExpense.data.value;
+                    } else {
+                        // Fallback: try to coerce to number from the stringified form
+                        const num = Number(predictedExpense);
+                        if (!Number.isNaN(num)) predictedValue = num;
+                        else {
+                            const m = String(JSON.stringify(predictedExpense)).match(/-?\\d+\\.?\\d*/);
+                            if (m) predictedValue = parseFloat(m[0]);
+                        }
+                    }
+                } else if (typeof predictedExpense === 'string') {
+                    const n = parseFloat(predictedExpense.replace(/[^0-9.-]+/g, ''));
+                    if (!Number.isNaN(n)) predictedValue = n;
+                }
+            }
+
+            if (predictedValue > 0) {
+                contextualParts.push(
+                    `Here is a summary of my predicted Expense of this month: ₹${predictedValue.toFixed(2)}`
+                );
+            }
 
             const contextual = contextualParts.join(' ');
             const messages = [
@@ -70,7 +108,7 @@ If the question is vague, interpret it in a financial context only.
                 messages.push({ role: msg.role || 'user', content: String(msg.content || '') });
             }
 
-     
+
             messages.push({ role: 'user', content: String(nextChat) });
 
             const model = process.env.GROQ_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";

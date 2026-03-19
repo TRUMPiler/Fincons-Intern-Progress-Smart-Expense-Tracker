@@ -5,6 +5,7 @@ import AiInteraction from "../ai/AiInteraction.js";
 import Transaction from "../models/Transaction.js";
 import ChartsService from "./ChartsService.js";
 import Budget from "../models/Budget.js";
+import MarketService from "./MarketService.js";
 
 class ChatService {
 
@@ -107,7 +108,8 @@ class ChatService {
             const transactionsData = await ChartsService.CategorywiseSpendingChart(userId).catch(() => null);
             const IncomeExpense = await ChartsService.IncomeExpense(userId).catch(() => null);
             const predictedExpense=await ChartsService.PredictedExpense(userId).catch(()=>null);
-            const aiReply = await AiInteraction.ChatComplete(conversationHistory, message, transactionsData, IncomeExpense,predictedExpense);
+            const marketData = await MarketService.getOverview().catch(() => null);
+            const aiReply = await AiInteraction.ChatComplete(conversationHistory, message, transactionsData, IncomeExpense, predictedExpense, marketData);
 
             const modelMessage = new Chat({
                 content: aiReply || `Hello ${userData.name}, I couldn't process that right now.`,

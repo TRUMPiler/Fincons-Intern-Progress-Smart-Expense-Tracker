@@ -15,8 +15,9 @@ import SummaryCard from "../components/SummaryCard";
 import IncomeExpense from "../components/IncomeExpense";
 import CategorySpending from "../components/CategorySpending";
 import BudgetMeters from "../components/BudgetMeters";
+import MarketWidget from "../components/MarketWidget";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { BarChart3, Wallet, ListChecks } from "lucide-react";
+import { BarChart3, Wallet, ListChecks, TrendingUp } from "lucide-react";
 import ArturoGif from "../assets/Ai Image.gif";
 
 type CategoryProp = {
@@ -75,6 +76,7 @@ const DashboardL: FC = () => {
     const [dynamicYearOptions, setDynamicYearOptions] = useState<Array<{ label: string; value: number }>>([]);
     const [isInitialized, setIsInitialized] = useState(false);
     const useDashboard=useContext(DashboardContext);
+    const { setMonth, setYear } = useDashboard;
     const [fiananceHealth,setFiananceHealth]=useState<health>({label:"",score:0,breakdown:{
         savings:0,
         stability:0,
@@ -86,7 +88,7 @@ const DashboardL: FC = () => {
         expense:0,
         savings:0
     }});
-    const [dashboardView,setDashboardView]=useState<"Financial Overview"|"Budget Overview"|"Transcations">("Financial Overview");
+    const [dashboardView,setDashboardView]=useState<"Financial Overview"|"Budget Overview"|"Transcations"|"Market Info">("Financial Overview");
     const [chartsMounted, setChartsMounted] = useState(false);
     const [currentAlertIndex, setCurrentAlertIndex] = useState<number | null>(null);
     const dispatch = useAppDispatch();
@@ -166,7 +168,7 @@ const DashboardL: FC = () => {
             })
             .catch((err: any) => console.error("Category fetch failed", err));
             console.log(useDashboard.month);
-    }, [,useDashboard.month,useDashboard.year]);
+    }, [useDashboard.month, useDashboard.year]);
 
     useEffect(() => {
         setLoadCharts(true);
@@ -422,7 +424,7 @@ const DashboardL: FC = () => {
 
             setIsInitialized(true);
         }
-    }, [charts.availableMonths, isInitialized, useDashboard]);
+    }, [charts.availableMonths, isInitialized, setMonth, setYear]);
 
     useEffect(() => {
      
@@ -508,7 +510,7 @@ const DashboardL: FC = () => {
                         />
                     </div>
                     <Tabs value={dashboardView} onValueChange={(val) => setDashboardView(val as "Financial Overview" | "Budget Overview" | "Transcations")} className="w-full lg:w-auto">
-                      <TabsList className="grid w-full lg:w-auto grid-cols-3">
+                    <TabsList className="grid w-full lg:w-auto grid-cols-4">
                         <TabsTrigger value="Financial Overview" className="flex items-center gap-2">
                           <BarChart3 className="w-4 h-4" />
                           <span className="hidden sm:inline">Financial Overview</span>
@@ -524,6 +526,11 @@ const DashboardL: FC = () => {
                           <span className="hidden sm:inline">Transactions</span>
                           <span className="sm:hidden">Trans</span>
                         </TabsTrigger>
+                                                <TabsTrigger value="Market Info" className="flex items-center gap-2">
+                                                    <TrendingUp className="w-4 h-4" />
+                                                    <span className="hidden sm:inline">Market Info</span>
+                                                    <span className="sm:hidden">Market</span>
+                                                </TabsTrigger>
                       </TabsList>
                     </Tabs>
                 </div>
@@ -620,7 +627,11 @@ const DashboardL: FC = () => {
                         )}
                     </Card>
                 </div>
-            ) : dashboardView == "Budget Overview" ? (
+                ) : dashboardView === "Market Info" ? (
+                    <div className="space-y-6">
+                        <MarketWidget />
+                    </div>
+                ) : dashboardView == "Budget Overview" ? (
                 <div>
                     <BudgetMeters loading={loading} charts={charts} />
                 </div>

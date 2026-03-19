@@ -16,6 +16,7 @@ import CategoryService from "./services/CategoryService.js";
 import ChartRoute from './Routes/ChartRoute.js';
 import CronJobRouter from './Routes/CronJobRoute.js'
 import AlertRoute from './Routes/AlertRoute.js';
+import MarketRoute from './Routes/MarketRoute.js';
 import { seedTransactions } from "./SeederJunction.js";
 
 const app = express();
@@ -43,6 +44,7 @@ app.use("/api/category", categoryRoutes);
 app.use("/api/transcation", transcationRoutes);
 app.use("/api/budget", budgetRoutes);
 app.use("/api/charts", ChartRoute);
+app.use("/api/market", MarketRoute);
 
 app.use(Error);
 

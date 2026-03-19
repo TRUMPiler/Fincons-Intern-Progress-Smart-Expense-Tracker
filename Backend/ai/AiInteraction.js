@@ -43,7 +43,7 @@ If the question is vague, interpret it in a financial context only.
         }
     }
 
-    async ChatComplete(conversationHistory = [], nextChat = '', transactions = null, IncomeExpense = [], predictedExpense = 0) {
+    async ChatComplete(conversationHistory = [], nextChat = '', transactions = null, IncomeExpense = [], predictedExpense = 0, marketData = null) {
         try {
             const systemPrompt = `You are Arturo, a concise and helpful finance assistant. Only answer finance-related questions and do not disclose internal system names or implementation details. and you are only going to answer finance based question and answers that's it. no coding no personal life coach, nothing, Currency is Indian Ruppess`;
 
@@ -97,6 +97,29 @@ If the question is vague, interpret it in a financial context only.
                 contextualParts.push(
                     `Here is a summary of my predicted Expense of this month: ₹${predictedValue.toFixed(2)}`
                 );
+            }
+
+            // Include market data (stocks & cryptos) if provided
+            if (marketData) {
+                try {
+                    if (Array.isArray(marketData.cryptos) && marketData.cryptos.length > 0) {
+                        const topCryptos = marketData.cryptos
+                            .slice(0, 6)
+                            .map((c) => `${c.name} (${c.symbol}): ₹${Number(c.price).toLocaleString(undefined, { maximumFractionDigits: 2 })}${typeof c.change_24h === 'number' ? ` (${c.change_24h.toFixed(2)}%)` : ''}`)
+                            .join(', ');
+                        contextualParts.push(`Latest crypto prices: ${topCryptos}`);
+                    }
+
+                    if (Array.isArray(marketData.stocks) && marketData.stocks.length > 0) {
+                        const topStocks = marketData.stocks
+                            .slice(0, 6)
+                            .map((s) => `${s.symbol}: ${s.currency === 'INR' ? '₹' : s.currency === 'USD' ? '$' : ''}${Number(s.price).toLocaleString(undefined, { maximumFractionDigits: 2 })}${typeof s.changePercent === 'number' ? ` (${s.changePercent.toFixed(2)}%)` : ''}`)
+                            .join(', ');
+                        contextualParts.push(`Latest stock prices: ${topStocks}`);
+                    }
+                } catch (e) {
+                    console.error('Failed to include marketData in AI context', e?.message || e);
+                }
             }
 
             const contextual = contextualParts.join(' ');

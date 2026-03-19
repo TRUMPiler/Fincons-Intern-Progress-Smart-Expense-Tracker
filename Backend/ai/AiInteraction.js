@@ -67,7 +67,7 @@ If the question is vague, interpret it in a financial context only.
                 if (typeof predictedExpense === 'number' && !Number.isNaN(predictedExpense)) {
                     predictedValue = predictedExpense;
                 } else if (typeof predictedExpense === 'object') {
-                    // Common shapes: { data: number } or { data: [number] } or { value: number } or { prediction: number }
+                
                     if (typeof predictedExpense.data === 'number') {
                         predictedValue = predictedExpense.data;
                     } else if (Array.isArray(predictedExpense.data) && typeof predictedExpense.data[0] === 'number') {
@@ -79,7 +79,7 @@ If the question is vague, interpret it in a financial context only.
                     } else if (predictedExpense.data && typeof predictedExpense.data === 'object' && typeof predictedExpense.data.value === 'number') {
                         predictedValue = predictedExpense.data.value;
                     } else {
-                        // Fallback: try to coerce to number from the stringified form
+                       
                         const num = Number(predictedExpense);
                         if (!Number.isNaN(num)) predictedValue = num;
                         else {
@@ -99,7 +99,7 @@ If the question is vague, interpret it in a financial context only.
                 );
             }
 
-            // Include market data (stocks & cryptos) if provided
+
             if (marketData) {
                 try {
                     if (Array.isArray(marketData.cryptos) && marketData.cryptos.length > 0) {
@@ -109,7 +109,7 @@ If the question is vague, interpret it in a financial context only.
                             .join(', ');
                         contextualParts.push(`Latest crypto prices: ${topCryptos}`);
                     }
-
+                    
                     if (Array.isArray(marketData.stocks) && marketData.stocks.length > 0) {
                         const topStocks = marketData.stocks
                             .slice(0, 6)
